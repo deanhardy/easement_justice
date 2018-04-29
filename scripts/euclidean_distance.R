@@ -19,9 +19,9 @@ yr <- 2010
 
 ## import NCED data for low country region in SC & GA
 nced <- st_read("data/nced_lc.shp") %>%
-  # filter(owntype == 'PVT', 
-  #        purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
-  # filter(gapcat == '2') %>%
+  filter(owntype == 'PVT',
+         purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
+  filter(gapcat == '2') %>%
   st_transform(4269)
 
 ## re-run if census variables need to be changed
@@ -88,5 +88,13 @@ tiff('figures/race_pvt_cons.tiff', res = 300, units = 'in',
      height = 9, width = 10, compression = 'lzw')
 fig
 dev.off()
+
+
+
+#################################################
+## euclidean distance buffering
+#################################################
+
+
 
 
