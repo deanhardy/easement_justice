@@ -19,49 +19,49 @@ yr <- 2010
 
 ## import NCED data for low country region in SC & GA
 nced <- st_read("data/nced_lc.shp") %>%
-  filter(owntype == 'PVT',
-         purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
-  filter(gapcat == '2') %>%
-  st_transform(4269)
+  filter(owntype == 'PVT')
+  #        purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
+  # filter(gapcat == '2') # %>%
+  # st_transform(4269)
 
-## re-run if census variables need to be changed
-# ## define acs variables of interest
-# acs_vars <- c(white = "B03002_003E", black = "B03002_004E", 
-#                native_american = "B03002_005E", asian = "B03002_006E", 
-#                hawaiian = "B03002_007E", other = "B03002_008E", 
-#                multiracial = "B03002_009E", latinx = "B03002_012E")
-# 
-# ## define decennial variables of interest
-# dec_vars <- c(white = "P0050003", black = "P0050004", 
-#               native_american = "P0050005", asian = "P0050006", 
-#               hawaiian = "P0050007", other = "P0050008", 
-#               multiracial = "P0050009", nonlatinx = "P0050002",
-#               total = "P0050001")
-#   
-# ## import area of interest data
-# ga <- get_decennial(geography = "block group", 
-#               variables = dec_vars,
-#               state = "Georgia",
-#               year = yr,
-#               output = 'wide',
-#               geometry = TRUE) %>%
-#   mutate(latinx = total - nonlatinx) %>%
-#   select(-nonlatinx)
-# 
-# sc <- get_decennial(geography = "block group", 
-#                     variables = dec_vars,
-#                     state = "South Carolina",
-#                     year = yr,
-#                     output = 'wide',
-#                     geometry = TRUE) %>%
-#   mutate(latinx = total - nonlatinx) %>%
-#   select(-nonlatinx)
-# 
-# bg <- rbind(ga, sc) %>%
-#   mutate(prop_POC = 1 - (white/total))
-# 
-# ## export census data
-# st_write(bg, "data/bg_data.shp", driver = 'GEOJson')
+# re-run if census variables need to be changed
+## define acs variables of interest
+acs_vars <- c(white = "B03002_003E", black = "B03002_004E",
+               native_american = "B03002_005E", asian = "B03002_006E",
+               hawaiian = "B03002_007E", other = "B03002_008E",
+               multiracial = "B03002_009E", latinx = "B03002_012E")
+
+## define decennial variables of interest
+dec_vars <- c(white = "P0050003", black = "P0050004",
+              native_american = "P0050005", asian = "P0050006",
+              hawaiian = "P0050007", other = "P0050008",
+              multiracial = "P0050009", nonlatinx = "P0050002",
+              total = "P0050001")
+
+## import area of interest data
+ga <- get_decennial(geography = "block group",
+              variables = dec_vars,
+              state = "Georgia",
+              year = yr,
+              output = 'wide',
+              geometry = TRUE) %>%
+  mutate(latinx = total - nonlatinx, SqKM_BG = st_area(geometry) / 1e6) %>%
+  select(-nonlatinx)
+
+sc <- get_decennial(geography = "block group",
+                    variables = dec_vars,
+                    state = "South Carolina",
+                    year = yr,
+                    output = 'wide',
+                    geometry = TRUE) %>%
+  mutate(latinx = total - nonlatinx, SqKM_BG = st_area(geometry) / 1e6) %>%
+  select(-nonlatinx)
+
+bg <- rbind(ga, sc) %>%
+  mutate(prop_POC = 1 - (white/total))
+
+## export census data
+st_write(bg, "data/bg_data.shp", driver = 'GEOJson')
 
 ## import census data
 bg <- st_read("data/bg_data.shp")
@@ -71,7 +71,7 @@ fig <- tm_shape(bg) +
           title = "People of Color") +
   tm_shape(nced) + 
   tm_fill('owntype', palette = "green", legend.show = FALSE) +
-  tm_layout(title = "Lowcountry Private Conservation Easements (n = 1470)",
+  tm_layout(title = "Lowcountry Private Conservation Easements (n = 1196)",
             frame = FALSE, 
             outer.margins=c(0,0,0,0), 
             inner.margins=c(0,0,0,0), asp=0) + 
@@ -95,6 +95,22 @@ dev.off()
 ## euclidean distance buffering
 #################################################
 
+buf <- nced %>%
+# st_transform(2163) %>%
+  st_buffer(dist = 16000)
+
+##
+int <- as.tibble(st_intersection(buf, st_transform(bg, 3857)))
+
+##
+ncedbuf_bg <- int %>%
+  mutate(SqKMBGinNCED = as.numeric(st_area(geometry) / 1e6)) %>%
+  mutate(PercBGinNCED = (SqKBGinNCED/Area))
+
+tm_shape(buf) +
+  tm_borders() +
+  tm_shape(nced) + 
+  tm_polygons(palette = 'green')
 
 
 
