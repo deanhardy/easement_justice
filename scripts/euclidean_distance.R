@@ -135,13 +135,29 @@ ncedbuf_bg <- int %>%
             multiracial = sum(multiracial), latinx = sum(latinx),
             SqKM_BUF = mean(SqKM_BUF)) %>%
   mutate(propPOC = (total - white)/total) %>%
-  merge(nced, by = 'unique_id')
+  merge(nced, by = 'unique_id') %>%
+  mutate(y = gis_acres, x = propPOC)
 
-ggplot(filter(ncedbuf_bg, purpose == 'ENV')) + 
-  geom_point(aes(propPOC * 100, gis_acres), color = 'black') +
-  geom_point(aes((white/total) * 100, gis_acres), color = 'white') +
-  geom_smooth(aes(propPOC * 100, gis_acres), method = 'lm', color = 'black') + 
-  geom_smooth(aes((white/total) * 100, gis_acres), method = 'lm', color = 'white') 
+## GET EQUATION AND R-SQUARED AS STRING
+## SOURCE: http://goo.gl/K4yh
 
+# lm_eqn <- function(df){
+#   m <- lm(y ~ x, df);
+#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+#                    list(a = format(coef(m)[1], digits = 2), 
+#                         b = format(coef(m)[2], digits = 2), 
+#                         r2 = format(summary(m)$r.squared, digits = 3)))
+#   as.character(as.expression(eq));                 
+# }
+
+ggplot(filter(df, purpose == 'ENV')) + 
+  geom_point(aes(propPOC * 100, log(gis_acres)), color = 'black') +
+  geom_point(aes((white/total) * 100, log(gis_acres)), color = 'white') +
+  geom_smooth(aes(propPOC * 100, log(gis_acres)), method = 'lm', color = 'black') + 
+  geom_smooth(aes((white/total) * 100, log(gis_acres)), method = 'lm', color = 'white')
+  # geom_text(x = 25, y = 8000, label = lm_eqn(df), parse = TRUE)
+
+M <-lm(ncedbuf_bg$gis_acres ~ ncedbuf_bg$propPOC)
+summary(M)
 
 
