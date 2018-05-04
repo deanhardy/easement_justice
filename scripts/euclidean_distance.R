@@ -133,9 +133,15 @@ ncedbuf_bg <- int %>%
             native_american = sum(native_american),
             asian = sum(asian), hawaiian = sum(hawaiian), other = sum(other),
             multiracial = sum(multiracial), latinx = sum(latinx),
-            SqKM_BUF = mean(SqKM_BUF))
+            SqKM_BUF = mean(SqKM_BUF)) %>%
+  mutate(propPOC = (total - white)/total) %>%
+  merge(nced, by = 'unique_id')
 
-
+ggplot(filter(ncedbuf_bg, purpose == 'ENV')) + 
+  geom_point(aes(propPOC * 100, gis_acres), color = 'black') +
+  geom_point(aes((white/total) * 100, gis_acres), color = 'white') +
+  geom_smooth(aes(propPOC * 100, gis_acres), method = 'lm', color = 'black') + 
+  geom_smooth(aes((white/total) * 100, gis_acres), method = 'lm', color = 'white') 
 
 
 
