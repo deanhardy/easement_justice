@@ -43,7 +43,7 @@ dec_vars <- c(white = "P0050003", black = "P0050004",
               total = "P0050001")
 
 ## import area of interest data
-ga <- get_decennial(geography = "block group",
+ga <- get_decennial(geography = "block",
               variables = dec_vars,
               state = "Georgia",
               year = yr,
