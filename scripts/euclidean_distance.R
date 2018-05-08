@@ -13,9 +13,9 @@ library(lwgeom)
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
 
 ## define acs year and region for census data import
-yr <- 2010
-# cnty <- c("")
+YR <- 2010
 # ST <- c("Georgia", "South Carolina")
+# CNTY <- c('Richland', 'Bryan')
 
 ##############################################################
 ## data import and prepping
@@ -42,20 +42,34 @@ dec_vars <- c(white = "P0050003", black = "P0050004",
               multiracial = "P0050009", nonlatinx = "P0050002",
               total = "P0050001")
 
+## grab counties to create character vector for data grab
+ga_cnty <- counties('georgia', cb = TRUE) %>%
+  st_as_sf() %>%
+  st_set_geometry(NULL) %>%
+  select('NAME')
+  
 ## import area of interest data
 ga <- get_decennial(geography = "block",
-              variables = "P0050001",
-              state = "Georgia",
-              year = '2010',
+              variables = dec_vars,
+              state = 'Georgia',
+              county = ga_cnty$NAME,
+              year = YR,
               output = 'wide',
-              geometry = TRUE) #%>%
+              geometry = TRUE) %>%
   st_transform(crs = alb) %>%
-  mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) #%>%
+  mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
   dplyr::select(-nonlatinx)
+
+## grab counties to create character vector for data grab
+sc_cnty <- counties('south carolina', cb = TRUE) %>%
+  st_as_sf() %>%
+  st_set_geometry(NULL) %>%
+  select('NAME')
 
 sc <- get_decennial(geography = "block",
                     variables = dec_vars,
-                    state = "South Carolina",
+                    state = 'South Carolina',
+                    county = sc_cnty$NAME,
                     year = yr,
                     output = 'wide',
                     geometry = TRUE) %>%
