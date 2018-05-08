@@ -85,10 +85,10 @@ nced <- st_read("data/nced_lc.shp") %>%
 
 
 ## import census data
-bg <- st_read("data/bg_data.geojson") %>%
+df <- st_read("data/block_data.geojson") %>%
   st_transform(crs = alb)
 
-fig <- tm_shape(bg) + 
+fig <- tm_shape(df) + 
   tm_fill('prop_POC', palette = "Greys",
           title = "People of Color") +
   tm_shape(nced) + 
