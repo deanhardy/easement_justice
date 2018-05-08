@@ -28,61 +28,60 @@ nced <- st_read("data/nced_lc.shp") %>%
   # filter(gapcat == '2') # %>%
   st_transform(crs = alb)
 
-## re-run if census variables need to be changed
-## define acs variables of interest
-acs_vars <- c(white = "B03002_003E", black = "B03002_004E",
-               native_american = "B03002_005E", asian = "B03002_006E",
-               hawaiian = "B03002_007E", other = "B03002_008E",
-               multiracial = "B03002_009E", latinx = "B03002_012E")
-
-## define decennial variables of interest
-dec_vars <- c(white = "P0050003", black = "P0050004",
-              native_american = "P0050005", asian = "P0050006",
-              hawaiian = "P0050007", other = "P0050008",
-              multiracial = "P0050009", nonlatinx = "P0050002",
-              total = "P0050001")
-
-## grab counties to create character vector for data grab
-ga_cnty <- counties('georgia', cb = TRUE) %>%
-  st_as_sf() %>%
-  st_set_geometry(NULL) %>%
-  select('NAME')
-  
-## import area of interest data
-ga <- get_decennial(geography = "block",
-              variables = dec_vars,
-              state = 'Georgia',
-              county = ga_cnty$NAME,
-              year = YR,
-              output = 'wide',
-              geometry = TRUE) %>%
-  st_transform(crs = alb) %>%
-  mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
-  dplyr::select(-nonlatinx)
-
-## grab counties to create character vector for data grab
-sc_cnty <- counties('south carolina', cb = TRUE) %>%
-  st_as_sf() %>%
-  st_set_geometry(NULL) %>%
-  select('NAME')
-
-sc <- get_decennial(geography = "block",
-                    variables = dec_vars,
-                    state = 'South Carolina',
-                    county = sc_cnty$NAME,
-                    year = yr,
-                    output = 'wide',
-                    geometry = TRUE) %>%
-  st_transform(crs = alb) %>%
-  mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
-  select(-nonlatinx)
-
-bg <- rbind(ga, sc) %>%
-  mutate(prop_POC = 1 - (white/total))
-
-## export census data
-bg %>% st_transform(crs = 4326) %>%
-st_write("data/block_data.geojson", driver = 'GEOJson')
+# ## re-run if census variables need to be changed
+# ## define acs variables of interest
+# acs_vars <- c(white = "B03002_003E", black = "B03002_004E",
+#                native_american = "B03002_005E", asian = "B03002_006E",
+#                hawaiian = "B03002_007E", other = "B03002_008E",
+#                multiracial = "B03002_009E", latinx = "B03002_012E")
+# 
+# ## define decennial variables of interest
+# dec_vars <- c(white = "P0050003", black = "P0050004",
+#               native_american = "P0050005", asian = "P0050006",
+#               hawaiian = "P0050007", other = "P0050008",
+#               multiracial = "P0050009", nonlatinx = "P0050002",
+#               total = "P0050001")
+# 
+# ## grab counties to create character vector for data grab
+# ## necessary for block data grab, but not for block groups
+# ga_cnty <- counties('georgia', cb = TRUE) %>%
+#   st_as_sf() %>%
+#   st_set_geometry(NULL) %>%
+#   select('COUNTYFP')
+# 
+# ga <- get_decennial(geography = "block",
+#               variables = dec_vars,
+#               state = 'Georgia',
+#               county = ga_cnty$COUNTYFP,
+#               year = YR,
+#               output = 'wide',
+#               geometry = TRUE) %>%
+#   st_transform(crs = alb) %>%
+#   mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
+#   dplyr::select(-nonlatinx)
+# 
+# sc_cnty <- counties('south carolina', cb = TRUE) %>%
+#   st_as_sf() %>%
+#   st_set_geometry(NULL) #%>%
+#   select('COUNTYFP')
+# 
+# sc <- get_decennial(geography = "block",
+#                     variables = dec_vars,
+#                     state = 'South Carolina',
+#                     county = sc_cnty$COUNTYFP,
+#                     year = YR,
+#                     output = 'wide',
+#                     geometry = TRUE) %>%
+#   st_transform(crs = alb) %>%
+#   mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
+#   select(-nonlatinx)
+# 
+# bg <- rbind(ga, sc) %>%
+#   mutate(prop_POC = 1 - (white/total))
+# 
+# ## export census data
+# bg %>% st_transform(crs = 4326) %>%
+# st_write("data/block_data.geojson", driver = 'GEOJson')
 
 
 ## import census data
