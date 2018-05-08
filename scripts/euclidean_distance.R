@@ -85,31 +85,31 @@ nced <- st_read("data/nced_lc.shp") %>%
 
 
 ## import census data
-df <- st_read("data/block_data.geojson") %>%
+bg <- st_read("data/bg_data.geojson") %>%
   st_transform(crs = alb)
 
-fig <- tm_shape(df) + 
-  tm_fill('prop_POC', palette = "Greys",
-          title = "People of Color") +
-  tm_shape(nced) + 
-  tm_fill('owntype', palette = "green", legend.show = FALSE) +
-  tm_layout(title = "Lowcountry Private Conservation Easements (n = 1196)",
-            frame = FALSE, 
-            outer.margins=c(0,0,0,0), 
-            inner.margins=c(0,0,0,0), asp=0) + 
-  tm_compass(type = "arrow", size = 5, position = c(0.61, 0.09)) +
-  tm_scale_bar(breaks = c(0,100), size = 1.2, position= c(0.57, 0.02)) +
-  tm_legend(position = c(0.8, 0.04),
-            bg.color = "white",
-            frame = TRUE,
-            legend.text.size = 1.2,
-            legend.title.size = 1.5)
-fig
-
-tiff('figures/race_pvt_cons.tiff', res = 300, units = 'in',
-     height = 9, width = 10, compression = 'lzw')
-fig
-dev.off()
+# fig <- tm_shape(bg) + 
+#   tm_fill('prop_POC', palette = "Greys",
+#           title = "People of Color") +
+#   tm_shape(nced) + 
+#   tm_fill('owntype', palette = "green", legend.show = FALSE) +
+#   tm_layout(title = "Lowcountry Private Conservation Easements (n = 1196)",
+#             frame = FALSE, 
+#             outer.margins=c(0,0,0,0), 
+#             inner.margins=c(0,0,0,0), asp=0) + 
+#   tm_compass(type = "arrow", size = 5, position = c(0.61, 0.09)) +
+#   tm_scale_bar(breaks = c(0,100), size = 1.2, position= c(0.57, 0.02)) +
+#   tm_legend(position = c(0.8, 0.04),
+#             bg.color = "white",
+#             frame = TRUE,
+#             legend.text.size = 1.2,
+#             legend.title.size = 1.5)
+# fig
+# 
+# tiff('figures/race_pvt_cons.tiff', res = 300, units = 'in',
+#      height = 9, width = 10, compression = 'lzw')
+# fig
+# dev.off()
 
 
 
@@ -149,8 +149,13 @@ ncedbuf_bg <- int %>%
             SqKM_BUF = mean(SqKM_BUF)) %>%
   mutate(propPOC = (total - white)/total) %>%
   merge(nced, by = 'unique_id') %>%
-  mutate(y = gis_acres, x = propPOC)
+  st_as_sf()
 
+df <- ncedbuf_bg %>% 
+  st_transform(4326)
+
+st_write(ncedbuf_bg,'data/nced_race.geojson', driver = 'geojson')
+         
 ## GET EQUATION AND R-SQUARED AS STRING
 ## SOURCE: http://goo.gl/K4yh
 
@@ -163,12 +168,18 @@ ncedbuf_bg <- int %>%
 #   as.character(as.expression(eq));                 
 # }
 
-ggplot(filter(df, purpose == 'ENV')) + 
+fig2 <- ggplot(filter(ncedbuf_bg, purpose == 'ENV' & gapcat == '2')) + 
   geom_point(aes(propPOC * 100, log(gis_acres)), color = 'black') +
   geom_point(aes((white/total) * 100, log(gis_acres)), color = 'white') +
   geom_smooth(aes(propPOC * 100, log(gis_acres)), method = 'lm', color = 'black') + 
   geom_smooth(aes((white/total) * 100, log(gis_acres)), method = 'lm', color = 'white')
   # geom_text(x = 25, y = 8000, label = lm_eqn(df), parse = TRUE)
+fig2
+
+tiff('figures/proportionPOC_by_easement_size.tif', compression = 'lzw', res = 300,
+     height = 5, width = 5, units = 'in')
+fig2
+dev.off()
 
 M <-lm(ncedbuf_bg$gis_acres ~ ncedbuf_bg$propPOC)
 summary(M)
