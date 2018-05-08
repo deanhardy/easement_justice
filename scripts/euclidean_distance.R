@@ -44,13 +44,13 @@ dec_vars <- c(white = "P0050003", black = "P0050004",
 
 ## import area of interest data
 ga <- get_decennial(geography = "block",
-              variables = dec_vars,
+              variables = "P0050001",
               state = "Georgia",
-              year = yr,
+              year = '2010',
               output = 'wide',
-              geometry = TRUE) %>%
+              geometry = TRUE) #%>%
   st_transform(crs = alb) %>%
-  mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
+  mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) #%>%
   dplyr::select(-nonlatinx)
 
 sc <- get_decennial(geography = "block",
