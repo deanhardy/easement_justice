@@ -167,23 +167,19 @@ bz_bg <- int %>%
   mutate(tot_pop = total * PercBGinBUF,
          white = white * PercBGinBUF, 
          black = black * PercBGinBUF,
-         native_american = native_american * PercBGinBUF,
-         asian = asian * PercBGinBUF,
-         hawaiian = hawaiian * PercBGinBUF,
-         other = other * PercBGinBUF,
-         multiracial = multiracial * PercBGinBUF,
+         other = (native_american+asian+hawaiian+other+multiracial) * PercBGinBUF,
          latinx = latinx * PercBGinBUF) %>%
   group_by(rowid) %>%
-  select(rowid, tot_pop, white, black, native_american, asian, hawaiian, 
-         other, multiracial, latinx, SqKM_BUF) %>%
+  select(rowid, tot_pop, white, black, other, latinx, SqKM_BUF) %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
-            native_american = sum(native_american),
-            asian = sum(asian), hawaiian = sum(hawaiian), other = sum(other),
-            multiracial = sum(multiracial), latinx = sum(latinx),
+            other = sum(other), latinx = sum(latinx),
             SqKM_BUF = mean(SqKM_BUF)) %>%
   mutate(propPOC = (tot_pop - white)/tot_pop) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
+
+library(tables)
+
 
 df <- bz_bg %>% 
   st_transform(4326)
