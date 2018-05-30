@@ -120,30 +120,30 @@ cons <- rbind(private, public) %>%
 bg <- st_read("data/bg_data.geojson") %>%
   st_transform(crs = utm)
 
-fig <- tm_shape(bg) +
-  tm_fill('prop_POC', palette = "Greys",
-          title = "People of Color") +
-  tm_shape(cons) +
-  tm_fill('type', legend.show = TRUE) +
-  tm_shape(lc) +
-  tm_borders(col = 'black') +
-  tm_layout(title = "Lowcountry Conservation Areas (n = 323)",
-            frame = FALSE,
-            outer.margins=c(0,0,0,0),
-            inner.margins=c(0,0,0,0), asp=0) +
-  tm_compass(type = "arrow", size = 5, position = c(0.61, 0.09)) +
-  tm_scale_bar(breaks = c(0,100), size = 1.2, position= c(0.57, 0.02)) +
-  tm_legend(position = c(0.8, 0.04),
-            bg.color = "white",
-            frame = TRUE,
-            legend.text.size = 1.2,
-            legend.title.size = 1.5)
-fig
-
-tiff('figures/cons_race.tiff', res = 300, units = 'in',
-     height = 9, width = 10, compression = 'lzw')
-fig
-dev.off()
+# fig <- tm_shape(bg) +
+#   tm_fill('prop_POC', palette = "Greys",
+#           title = "People of Color") +
+#   tm_shape(cons) +
+#   tm_fill('type', legend.show = TRUE) +
+#   tm_shape(lc) +
+#   tm_borders(col = 'black') +
+#   tm_layout(title = "Lowcountry Conservation Areas (n = 323)",
+#             frame = FALSE,
+#             outer.margins=c(0,0,0,0),
+#             inner.margins=c(0,0,0,0), asp=0) +
+#   tm_compass(type = "arrow", size = 5, position = c(0.61, 0.09)) +
+#   tm_scale_bar(breaks = c(0,100), size = 1.2, position= c(0.57, 0.02)) +
+#   tm_legend(position = c(0.8, 0.04),
+#             bg.color = "white",
+#             frame = TRUE,
+#             legend.text.size = 1.2,
+#             legend.title.size = 1.5)
+# fig
+# 
+# tiff('figures/cons_race.tiff', res = 300, units = 'in',
+#      height = 9, width = 10, compression = 'lzw')
+# fig
+# dev.off()
 
 
 
@@ -178,13 +178,14 @@ bz_bg <- int %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
-library(tables)
-
+# library(tables)
+install.packages("stargazer")
+library(stargazer)
 
 df <- bz_bg %>% 
   st_transform(4326)
 
-st_write(bz_bg,'data/bz_race.geojson', driver = 'geojson')
+st_write(df,'data/bz_race.geojson', driver = 'geojson')
          
 ## GET EQUATION AND R-SQUARED AS STRING
 ## SOURCE: http://goo.gl/K4yh
