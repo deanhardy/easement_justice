@@ -12,6 +12,9 @@ library(lwgeom)
 ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
 
+## NAD 83 UTM 17N
+utm <- 2150
+
 ## define acs year and region for census data import
 YR <- 2010
 # ST <- c("Georgia", "South Carolina")
@@ -23,11 +26,22 @@ YR <- 2010
 
 ## import NCED data for low country region in SC & GA
 nced <- st_read("data/nced_lc.shp") %>%
-  filter(owntype == 'PVT') %>%
-  #        purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
-  # filter(gapcat == '2') # %>%
-  st_transform(crs = alb)
+  filter(owntype == 'PVT', 
+         purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
+  # filter(gapcat == '2') %>%
+  st_transform(crs = utm)
 
+## import PAD-US data for low country region in SC & GA
+fed <- st_read("data/padus_lc.shp") %>%
+  filter(Own_Type == "FED",
+         Category != "Easement") %>%
+  filter(GAP_Sts %in% c('1', '2'))
+
+state <- st_read("data/padus_lc.shp") %>%
+  filter(Own_Type == "STAT",
+         Category != "Easement") %>%
+  filter(GAP_Sts %in% c('1', '2'))
+  
 # ## re-run if census variables need to be changed
 # ## define acs variables of interest
 # acs_vars <- c(white = "B03002_003E", black = "B03002_004E",
@@ -86,7 +100,7 @@ nced <- st_read("data/nced_lc.shp") %>%
 
 ## import census data
 bg <- st_read("data/bg_data.geojson") %>%
-  st_transform(crs = alb)
+  st_transform(crs = utm)
 
 # fig <- tm_shape(bg) + 
 #   tm_fill('prop_POC', palette = "Greys",
