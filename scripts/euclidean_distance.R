@@ -35,8 +35,8 @@ private <- st_read("data/nced_lc.shp") %>%
   filter(gapcat %in% c('1','2')) %>%
   mutate(type = "Easement") %>%
   st_transform(crs = utm) %>%
-  select(type, state, gis_acres, gapcat, geometry) %>%
-  rename(acres = gis_acres, gap = gapcat)
+  select(type, state, sitename, esmthldr, gis_acres, gapcat, geometry) %>%
+  rename(management = esmthldr, acres = gis_acres, gap = gapcat)
 
 ## import PAD-US data for low country region in SC & GA
 public <- st_read("data/padus_lc.shp") %>%
@@ -44,18 +44,18 @@ public <- st_read("data/padus_lc.shp") %>%
          Category != "Easement") %>%
   filter(GAP_Sts %in% c('1', '2')) %>%
   st_transform(crs = utm) %>%
-  select(d_Own_Type, State_Nm, GIS_Acres, GAP_Sts, geometry) %>%
-  rename(type = d_Own_Type, state = State_Nm, acres = GIS_Acres, gap = GAP_Sts)
+  select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, geometry) %>%
+  rename(type = d_Own_Type, state = State_Nm, sitename = Unit_Nm, management = d_Mang_Nam, acres = GIS_Acres, gap = GAP_Sts)
 
-fed <- st_read("data/padus_lc.shp") %>%
-  filter(Own_Type == "FED",
-         Category != "Easement") %>%
-  filter(GAP_Sts %in% c('1', '2'))
-
-state <- st_read("data/padus_lc.shp") %>%
-  filter(Own_Type == "STAT",
-         Category != "Easement") %>%
-  filter(GAP_Sts %in% c('1', '2'))
+# fed <- st_read("data/padus_lc.shp") %>%
+#   filter(Own_Type == "FED",
+#          Category != "Easement") %>%
+#   filter(GAP_Sts %in% c('1', '2'))
+# 
+# state <- st_read("data/padus_lc.shp") %>%
+#   filter(Own_Type == "STAT",
+#          Category != "Easement") %>%
+#   filter(GAP_Sts %in% c('1', '2'))
 
 cons <- rbind(private, public) %>%
   rowid_to_column()
@@ -177,7 +177,6 @@ bz_geog <- int %>%
   mutate(propPOC = (tot_pop - white)/tot_pop) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
-
 
 df <- bz_geog %>% 
   st_transform(4326)
