@@ -3,9 +3,9 @@
 library(leaflet)
 library(sf)
 
-# df <- st_read("data/nced_race.geojson")
+# df <- st_read("data/bz_data.geojson")
 
-pal <- colorNumeric("Purples", df$propPOC)
+# pal <- colorNumeric("Rainbow", df$type)
 
 m <- leaflet() %>%
   addTiles() %>%
@@ -17,14 +17,13 @@ m <- leaflet() %>%
   #             fillOpacity = 0.5,
   #             weight = 1) %>%
   addPolygons(data = df,
-              popup = paste("Easement Holder:", df$esmthldr, "<br>",
+              popup = paste("Status:", df$type, "<br>",
                             "Site Name:", df$sitename, "<br>",
-                            "Acres:", df$gis_acres, "<br>",
+                            "Acres:", df$acres, "<br>",
                             "People of Color (%):", 100*df$propPOC, "<br>",
-                            "Purpose:", df$purpose, "<br>",
-                            "GAP Category:", df$gapcat),
+                            "GAP Category:", df$gap),
               group = "click",
-              fillColor = ~pal(propPOC),
+              fillColor = df$type,
               fillOpacity = 0.5,
               weight = 1) %>%
   # addLayersControl(baseGroups = c("hover", "click")) %>%
@@ -35,4 +34,4 @@ m <- leaflet() %>%
 
 ### exploring exporting as html file for offline exploration
 library(htmlwidgets)
-saveWidget(m, file="m.html")
+saveWidget(m, file="C:/Users/dhardy/Dropbox/sesync/manuscripts/unpublished/easement_justice/R/easement_justice/docs/lowcountry_conservation.html")
