@@ -105,7 +105,7 @@ cons <- rbind(private, public) %>%
 #                     output = 'wide',
 #                     geometry = TRUE) %>%
 #   st_transform(crs = alb) %>%
-#   mutate(latinx = total - nonlatinx, SqKM_BG = as.numeric(st_area(geometry)) / 1e6) %>%
+#   mutate(latinx = total - nonlatinx, sqkm_bg = as.numeric(st_area(geometry)) / 1e6) %>%
 #   select(-nonlatinx)
 # 
 # bg <- rbind(ga, sc) %>%
@@ -155,38 +155,54 @@ bg <- st_read("data/bg_data.geojson") %>%
 ## euclidean distance buffering
 buf <- cons %>%
   st_buffer(dist = 16000) %>%
-  mutate(SqKM_BUF = as.numeric(st_area(geometry) / 1e6))
+  mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
 
 ## define intersection between buffer zones and block groups
 int <- as.tibble(st_intersection(buf, bg))
 
 ## proportional area adjustment method
-bz_bg <- int %>%
-  mutate(SqKMBGinBUF = as.numeric(st_area(geometry) / 1e6)) %>%
-  mutate(PercBGinBUF = (SqKMBGinBUF/SqKM_BG)) %>%
-  mutate(tot_pop = total * PercBGinBUF,
-         white = white * PercBGinBUF, 
-         black = black * PercBGinBUF,
-         other = (native_american+asian+hawaiian+other+multiracial) * PercBGinBUF,
-         latinx = latinx * PercBGinBUF) %>%
+bz_geog <- int %>%
+  mutate(sqkm_bginbuf = as.numeric(st_area(geometry) / 1e6)) %>%
+  mutate(perc_bginbuf = (sqkm_bginbuf/SqKM_BG)) %>%
+  mutate(tot_pop = total * perc_bginbuf,
+         white = white * perc_bginbuf, 
+         black = black * perc_bginbuf,
+         other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbuf,
+         latinx = latinx * perc_bginbuf) %>%
   group_by(rowid) %>%
-  select(rowid, tot_pop, white, black, other, latinx, SqKM_BUF) %>%
+  select(rowid, tot_pop, white, black, other, latinx, sqkm_buf) %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx),
-            SqKM_BUF = mean(SqKM_BUF)) %>%
+            sqkm_buf = mean(sqkm_buf)) %>%
   mutate(propPOC = (tot_pop - white)/tot_pop) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
-# library(tables)
-install.packages("stargazer")
-library(stargazer)
 
-df <- bz_bg %>% 
+df <- bz_geog %>% 
   st_transform(4326)
 
-st_write(df,'data/bz_race.geojson', driver = 'geojson')
-         
+st_write(df,'data/bz_data.geojson', driver = 'geojson')
+
+
+
+
+####################################
+## statistical analysis
+####################################
+library(xtable)
+
+## convert to table
+bz_data <- df %>% st_set_geometry(NULL) %>% data.frame()
+write.csv(bz_data, 'data/bz_data.csv', row.names = FALSE)
+
+bz_data2 <- bz_data %>% filter(type != 'State')
+
+output <- glm(tot_pop ~ type, data = bz_data)
+summary(output)
+
+plot(output)
+
 ## GET EQUATION AND R-SQUARED AS STRING
 ## SOURCE: http://goo.gl/K4yh
 

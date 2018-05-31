@@ -1,0 +1,23 @@
+---
+title: "results_table"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stargazer)
+```
+
+## R Markdown
+
+```{r}
+df <- read.csv('data/bz_data.csv')
+```
+
+```{r results = 'asis'}
+stargazer(glm((black/tot_pop) ~ type, data = df), type = 'html', digits = 0)
+```
+
+
