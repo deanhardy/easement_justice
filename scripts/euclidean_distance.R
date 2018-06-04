@@ -68,26 +68,31 @@ cons <- rbind(private, public) %>%
 #           hawaiian = "B03002_007E", other = "B03002_008E",
 #           multiracial = "B03002_009E", latinx = "B03002_012E", total = "B03002_001E",
 #           medhhinc = "B19049_001E")
-
-## define decennial variables of interest
+#
+# ## define decennial variables of interest
 # dec_vars <- c(white = "P0050003", black = "P0050004",
 #               native_american = "P0050005", asian = "P0050006",
 #               hawaiian = "P0050007", other = "P0050008",
 #               multiracial = "P0050009", nonlatinx = "P0050002",
 #               total = "P0050001")
-
-## grab counties to create character vector for data grab
-## necessary for block data grab, but not for block groups
+#
+# ## grab counties to create character vector for data grab
+# ## necessary for block data grab, but not for block groups
 # ga_cnty <- counties('georgia', cb = TRUE) %>%
 #   st_as_sf() %>%
 #   st_set_geometry(NULL) %>%
+#   select('COUNTYFP')
+#
+# sc_cnty <- counties('south carolina', cb = TRUE) %>%
+#   st_as_sf() %>%
+#   st_set_geometry(NULL) #%>%
 #   select('COUNTYFP')
 
 # ga <- get_acs(geography = "block group",
 #               variables = c(white = "B03002_003E", black = "B03002_004E",
 #                             native_american = "B03002_005E", asian = "B03002_006E",
 #                             hawaiian = "B03002_007E", other = "B03002_008E",
-#                             multiracial = "B03002_009E", latinx = "B03002_012E", 
+#                             multiracial = "B03002_009E", latinx = "B03002_012E",
 #                             total = "B03002_001E", medhhinc = "B19049_001E"),
 #               state = 'Georgia',
 #               year = YR,
@@ -95,18 +100,15 @@ cons <- rbind(private, public) %>%
 #               geometry = TRUE) %>%
 #   st_transform(crs = alb) %>%
 #   mutate(sqkm_bg = as.numeric(st_area(geometry)) / 1e6) %>%
-#   dplyr::select(GEOID, total, white, black, native_american, asian, hawaiian, multiracial, latinx, medhhinc)
+#   dplyr::select(GEOID, total, white, black, native_american, asian, hawaiian, other, multiracial, latinx, medhhinc)
 # 
-# # sc_cnty <- counties('south carolina', cb = TRUE) %>%
-# #   st_as_sf() %>%
-# #   st_set_geometry(NULL) #%>%
-# #   select('COUNTYFP')
+# 
 # 
 # sc <- get_acs(geography = "block group",
 #         variables = c(white = "B03002_003E", black = "B03002_004E",
 #                       native_american = "B03002_005E", asian = "B03002_006E",
 #                       hawaiian = "B03002_007E", other = "B03002_008E",
-#                       multiracial = "B03002_009E", latinx = "B03002_012E", 
+#                       multiracial = "B03002_009E", latinx = "B03002_012E",
 #                       total = "B03002_001E", medhhinc = "B19049_001E"),
 #         state = 'South Carolina',
 #         year = YR,
@@ -114,11 +116,11 @@ cons <- rbind(private, public) %>%
 #         geometry = TRUE) %>%
 #   st_transform(crs = alb) %>%
 #   mutate(sqkm_bg = as.numeric(st_area(geometry)) / 1e6) %>%
-#   dplyr::select(GEOID, total, white, black, native_american, asian, hawaiian, multiracial, latinx, medhhinc)
+#   dplyr::select(GEOID, total, white, black, native_american, asian, hawaiian, other, multiracial, latinx, medhhinc)
 # 
 # bg <- rbind(ga, sc) %>%
 #   mutate(prop_POC = 1 - (white/total))
-
+# 
 # ## export census data
 # bg %>% st_transform(crs = 4326) %>%
 # st_write("data/bg_data.geojson", driver = 'GEOJson')
@@ -171,18 +173,19 @@ int <- as.tibble(st_intersection(buf, bg))
 ## proportional area adjustment method
 bz_geog <- int %>%
   mutate(sqkm_bginbuf = as.numeric(st_area(geometry) / 1e6)) %>%
-  mutate(perc_bginbuf = (sqkm_bginbuf/SqKM_BG)) %>%
+  mutate(perc_bginbuf = (sqkm_bginbuf/sqkm_buf)) %>%
   mutate(tot_pop = total * perc_bginbuf,
          white = white * perc_bginbuf, 
          black = black * perc_bginbuf,
          other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbuf,
          latinx = latinx * perc_bginbuf) %>%
   group_by(rowid) %>%
-  select(rowid, tot_pop, white, black, other, latinx, sqkm_buf) %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
-            other = sum(other), latinx = sum(latinx),
+            other = sum(other), latinx = sum(latinx), mnmdhhinc = mean(medhhinc),
             sqkm_buf = mean(sqkm_buf)) %>%
-  mutate(propPOC = (tot_pop - white)/tot_pop) %>%
+  mutate(pwhite = white/tot_pop, pblack = black/tot_pop, pother = other/tot_pop, 
+         platinx = latinx/tot_pop, popden = tot_pop/sqkm_buf, propPOC = 1 - pwhite) %>%
+  select(rowid, tot_pop, popden, sqkm_buf, pwhite, pblack, pother, platinx, propPOC, mnmdhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
@@ -205,7 +208,7 @@ write.csv(bz_data, 'data/bz_data.csv', row.names = FALSE)
 
 bz_data2 <- bz_data %>% filter(type != 'State')
 
-output <- glm(tot_pop ~ type, data = bz_data)
+output <- lm(pblack ~ type, data = bz_data)
 summary(output)
 
 plot(output)
