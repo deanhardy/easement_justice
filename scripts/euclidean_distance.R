@@ -205,9 +205,23 @@ st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
 
 
 
+#########################################
+## data exploration
+#########################################
+boxplot(propPOC~type, df, notch = TRUE)
+
+df2 <- gather(df, "race", "perc", 5:8)
+
+# ggplot(df2) +
+#   geom_point(aes(type, perc))
+
+
+
 ####################################
 ## statistical analysis
 ####################################
+
+
 library(xtable)
 
 ## convert to table
