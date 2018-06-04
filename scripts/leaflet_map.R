@@ -1,4 +1,4 @@
-# rm(list=ls())
+rm(list=ls())
 
 library(leaflet)
 library(sf)
@@ -20,8 +20,12 @@ m <- leaflet() %>%
               popup = paste("Site Name:", df$sitename, "<br>",
                             "Management:", df$management, "<br>",
                             "Acres:", df$acres, "<br>",
-                            "People of Color (%)", "<br>",
-                            "within 10 miles:", 100*df$propPOC, "<br>",
+                            "People of Color (%):", 100*df$propPOC, "<br>",
+                            "Black (%):", 100*df$pblack, "<br>",
+                            "Other race (%):", 100*df$pother, "<br>",
+                            "Latinx (%):", 100*df$platinx, "<br>",
+                            "White (%):", 100*df$pwhite, "<br>",
+                            "Median Household Income (US$):", df$mnmdhhinc, "<br>",
                             "GAP Status:", df$gap),
               group = "click",
               fillColor = ~pal(df$type),

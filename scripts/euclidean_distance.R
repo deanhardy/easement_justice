@@ -36,7 +36,9 @@ private <- st_read("data/nced_lc.shp") %>%
   mutate(type = "Easement") %>%
   st_transform(crs = utm) %>%
   select(type, state, sitename, esmthldr, gis_acres, gapcat, geometry) %>%
-  rename(management = esmthldr, acres = gis_acres, gap = gapcat)
+  rename(management = esmthldr, 
+         acres = gis_acres, 
+         gap = gapcat)
 
 ## import PAD-US data for low country region in SC & GA
 public <- st_read("data/padus_lc.shp") %>%
@@ -45,7 +47,12 @@ public <- st_read("data/padus_lc.shp") %>%
   filter(GAP_Sts %in% c('1', '2')) %>%
   st_transform(crs = utm) %>%
   select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, geometry) %>%
-  rename(type = d_Own_Type, state = State_Nm, sitename = Unit_Nm, management = d_Mang_Nam, acres = GIS_Acres, gap = GAP_Sts)
+  rename(type = d_Own_Type, 
+         state = State_Nm, 
+         sitename = Unit_Nm, 
+         management = d_Mang_Nam, 
+         acres = GIS_Acres, 
+         gap = GAP_Sts)
 
 # fed <- st_read("data/padus_lc.shp") %>%
 #   filter(Own_Type == "FED",
@@ -181,10 +188,11 @@ bz_geog <- int %>%
          latinx = latinx * perc_bginbuf) %>%
   group_by(rowid) %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
-            other = sum(other), latinx = sum(latinx), mnmdhhinc = mean(medhhinc),
+            other = sum(other), latinx = sum(latinx), mnmdhhinc = mean(medhhinc, na.rm = TRUE),
             sqkm_buf = mean(sqkm_buf)) %>%
-  mutate(pwhite = white/tot_pop, pblack = black/tot_pop, pother = other/tot_pop, 
-         platinx = latinx/tot_pop, popden = tot_pop/sqkm_buf, propPOC = 1 - pwhite) %>%
+  mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
+         platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_buf, 2), propPOC = round(1 - pwhite, 2),
+         mnmdhhinc = round(mnmdhhinc, 0)) %>%
   select(rowid, tot_pop, popden, sqkm_buf, pwhite, pblack, pother, platinx, propPOC, mnmdhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
@@ -192,7 +200,7 @@ bz_geog <- int %>%
 df <- bz_geog %>% 
   st_transform(4326)
 
-st_write(df,'data/bz_data.geojson', driver = 'geojson')
+st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
 
 
 
