@@ -4,18 +4,14 @@ library(leaflet)
 library(sf)
 
 df <- st_read("data/bz_data.geojson")
+bf <- st_read('data/ben_zones.geojson')
 
 pal <- colorFactor(rainbow(3), df$type)
 
 m <- leaflet() %>%
-  addTiles() %>%
+  addTiles(group = "Open Street Map") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
   setView(lng = -81, lat = 33, zoom = 7) %>%
-  # addPolygons(data = df,
-  #             label = ~esmthldr,
-  #             group = "hover",
-  #             fillColor = ~pal(propPOC),
-  #             fillOpacity = 0.5,
-  #             weight = 1) %>%
   addPolygons(data = df,
               popup = paste("Site Name:", df$sitename, "<br>",
                             "Management:", df$management, "<br>",
@@ -27,15 +23,22 @@ m <- leaflet() %>%
                             "White (%):", 100*df$pwhite, "<br>",
                             "Median Household Income (US$):", df$mnmdhhinc, "<br>",
                             "GAP Status:", df$gap),
-              group = "click",
+              group = "Conservation Areas",
               fillColor = ~pal(df$type),
               fillOpacity = 0.5,
               weight = 1) %>%
-  # addLayersControl(baseGroups = c("hover", "click")) %>%
-  addScaleBar() %>%
-  addLegend(pal = pal,
+  addPolylines(data = bf, 
+               color = ~pal(bf$type),
+               weight = 1, 
+               group = "Buffer Zones") %>%
+  addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
+      overlayGroups = c("Conservation Areas", "Buffer Zones"),
+      options = layersControlOptions(collapsed = TRUE)) %>%
+  addLegend("bottomright",
+            pal = pal,
             values = df$type,
-            title = "Conservation Area")
+            title = "Conservation Area") %>%
+  addScaleBar("bottomright")
 m
 
 ### exploring exporting as html file for offline exploration

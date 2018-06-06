@@ -174,6 +174,9 @@ buf <- cons %>%
   st_buffer(dist = 16000) %>%
   mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
 
+buf %>% st_transform(4326) %>%
+st_write('data/ben_zones.geojson', driver = 'geojson')
+
 ## define intersection between buffer zones and block groups
 int <- as.tibble(st_intersection(buf, bg))
 
