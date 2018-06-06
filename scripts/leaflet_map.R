@@ -10,6 +10,7 @@ pal <- colorFactor(rainbow(3), df$type)
 
 m <- leaflet() %>%
   addTiles(group = "Open Street Map") %>%
+  addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
   setView(lng = -81, lat = 33, zoom = 7) %>%
   addPolygons(data = df,
