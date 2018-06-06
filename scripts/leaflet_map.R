@@ -30,9 +30,9 @@ m <- leaflet() %>%
   addPolylines(data = bf, 
                color = ~pal(bf$type),
                weight = 1, 
-               group = "Buffer Zones") %>%
+               group = "Beneficiary Zones") %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-      overlayGroups = c("Conservation Areas", "Buffer Zones"),
+      overlayGroups = c("Conservation Areas", "Beneficiary Zones"),
       options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
             pal = pal,
