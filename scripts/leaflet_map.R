@@ -43,6 +43,8 @@ m
 
 ### exploring exporting as html file for offline exploration
 library(htmlwidgets)
-saveWidget(m, file="C:/Users/dhardy/Dropbox/sesync/manuscripts/unpublished/easement_justice/R/easement_justice/docs/lowcountry_conservation.html")
+saveWidget(m, 
+           file="C:/Users/dhardy/Dropbox/sesync/manuscripts/unpublished/easement_justice/R/easement_justice/docs/lowcountry_conservation.html",
+           title = "Lowcountry Conservation Areas")
 
 
