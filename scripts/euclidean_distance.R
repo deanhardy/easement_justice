@@ -211,7 +211,7 @@ st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
 #########################################
 ## data exploration
 #########################################
-boxplot(propPOC~type, df, notch = TRUE)
+boxplot(mnmdhhinc~type, df, notch = TRUE)
 
 df2 <- gather(df, "race", "perc", 5:8)
 
@@ -223,9 +223,11 @@ df2 <- gather(df, "race", "perc", 5:8)
 ####################################
 ## statistical analysis
 ####################################
-
+# http://rcompanion.org/handbook/G_06.html
 
 library(xtable)
+library(emmeans)
+library(multcompView)
 
 ## convert to table
 bz_data <- df %>% st_set_geometry(NULL) %>% data.frame()
@@ -233,37 +235,13 @@ write.csv(bz_data, 'data/bz_data.csv', row.names = FALSE)
 
 bz_data2 <- bz_data %>% filter(type != 'State')
 
-output <- lm(pblack ~ type, data = bz_data)
-summary(output)
+model <- glm(propPOC ~ type, family = gaussian, data = bz_data)
+marginal <- lsmeans(model, ~type)
+cld(marginal, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 
-plot(output)
+summary(output, dispersion = 1)
 
-## GET EQUATION AND R-SQUARED AS STRING
-## SOURCE: http://goo.gl/K4yh
 
-# lm_eqn <- function(df){
-#   m <- lm(y ~ x, df);
-#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-#                    list(a = format(coef(m)[1], digits = 2), 
-#                         b = format(coef(m)[2], digits = 2), 
-#                         r2 = format(summary(m)$r.squared, digits = 3)))
-#   as.character(as.expression(eq));                 
-# }
 
-fig2 <- ggplot(filter(ncedbuf_bg, purpose == 'ENV' & gapcat == '2')) + 
-  geom_point(aes(propPOC * 100, log(gis_acres)), color = 'black') +
-  geom_point(aes((white/total) * 100, log(gis_acres)), color = 'white') +
-  geom_smooth(aes(propPOC * 100, log(gis_acres)), method = 'lm', color = 'black') + 
-  geom_smooth(aes((white/total) * 100, log(gis_acres)), method = 'lm', color = 'white')
-  # geom_text(x = 25, y = 8000, label = lm_eqn(df), parse = TRUE)
-fig2
-
-tiff('figures/proportionPOC_by_easement_size.tif', compression = 'lzw', res = 300,
-     height = 5, width = 5, units = 'in')
-fig2
-dev.off()
-
-M <-lm(ncedbuf_bg$gis_acres ~ ncedbuf_bg$propPOC)
-summary(M)
 
 
