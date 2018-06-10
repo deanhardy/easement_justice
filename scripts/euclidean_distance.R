@@ -32,10 +32,10 @@ lc <- st_read("data/lowcountry.shp") %>%
 private <- st_read("data/nced_lc.shp") %>%
   filter(owntype == 'PVT', 
          purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
-  filter(gapcat %in% c('1','2')) %>%
+#  filter(gapcat %in% c('1','2')) %>%
   mutate(type = "Easement") %>%
   st_transform(crs = utm) %>%
-  select(type, state, sitename, esmthldr, gis_acres, gapcat, geometry) %>%
+  select(type, state, sitename, esmthldr, gis_acres, gapcat, purpose, geometry) %>%
   rename(management = esmthldr, 
          acres = gis_acres, 
          gap = gapcat)
@@ -45,8 +45,9 @@ public <- st_read("data/padus_lc.shp") %>%
   filter(Own_Type %in% c("FED", "STAT"),
          Category != "Easement") %>%
   filter(GAP_Sts %in% c('1', '2')) %>%
+  mutate(purpose = 'purpose') %>%
   st_transform(crs = utm) %>%
-  select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, geometry) %>%
+  select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
   rename(type = d_Own_Type, 
          state = State_Nm, 
          sitename = Unit_Nm, 
@@ -174,8 +175,8 @@ buf <- cons %>%
   st_buffer(dist = 16000) %>%
   mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
 
-buf %>% st_transform(4326) %>%
-st_write('data/ben_zones.geojson', driver = 'geojson')
+# buf %>% st_transform(4326) %>%
+# st_write('data/ben_zones.geojson', driver = 'geojson')
 
 ## define intersection between buffer zones and block groups
 int <- as.tibble(st_intersection(buf, bg))
@@ -203,7 +204,7 @@ bz_geog <- int %>%
 df <- bz_geog %>% 
   st_transform(4326)
 
-st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
+st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
 
 
 
@@ -211,7 +212,7 @@ st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
 #########################################
 ## data exploration
 #########################################
-boxplot(mnmdhhinc~type, df, notch = TRUE)
+boxplot(propPOC~type, df, notch = TRUE)
 
 df2 <- gather(df, "race", "perc", 5:8)
 
@@ -224,23 +225,24 @@ df2 <- gather(df, "race", "perc", 5:8)
 ## statistical analysis
 ####################################
 # http://rcompanion.org/handbook/G_06.html
+# https://magesblog.com/post/2015-08-04-generalised-linear-models-in-r/
 
-library(xtable)
+library(lme4)
 library(emmeans)
 library(multcompView)
 
 ## convert to table
 bz_data <- df %>% st_set_geometry(NULL) %>% data.frame()
-write.csv(bz_data, 'data/bz_data.csv', row.names = FALSE)
+# write.csv(bz_data, 'data/bz_data.csv', row.names = FALSE)
 
-bz_data2 <- bz_data %>% filter(type != 'State')
+bz2 <- bz_data %>% filter(type == 'Easement')
+mean(bz2$platinx)
 
-model <- glm(propPOC ~ type, family = gaussian, data = bz_data)
+hist(bz_data$pblack)
+
+model <- glm(pblack ~ type, family = gaussian(link = 'identity'), data = bz_data)
 marginal <- lsmeans(model, ~type)
-cld(marginal, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
-
-summary(output, dispersion = 1)
-
+cld(marginal, alpha = 0.01, Letters = letters, adjust = 'bonferroni')
 
 
 
