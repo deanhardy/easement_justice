@@ -45,7 +45,7 @@ public <- st_read("data/padus_lc.shp") %>%
   filter(Own_Type %in% c("FED", "STAT"),
          Category != "Easement") %>%
   filter(GAP_Sts %in% c('1', '2')) %>%
-  mutate(purpose = 'purpose') %>%
+  mutate(purpose = 'NA') %>%
   st_transform(crs = utm) %>%
   select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
   rename(type = d_Own_Type, 
