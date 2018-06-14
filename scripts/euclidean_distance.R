@@ -206,6 +206,3 @@ df <- bz_geog %>%
 
 st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
 
-
-
-
