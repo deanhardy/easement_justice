@@ -37,3 +37,4 @@ cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 ## some useful resources
 # http://rcompanion.org/handbook/G_06.html
 # https://magesblog.com/post/2015-08-04-generalised-linear-models-in-r/
+# https://blog.cloudera.com/blog/2015/12/common-probability-distributions-the-data-scientists-crib-sheet/
