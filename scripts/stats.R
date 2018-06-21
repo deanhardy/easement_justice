@@ -3,6 +3,7 @@ rm(list=ls())
 library(lme4)
 library(emmeans)
 library(multcompView)
+library(HH)
 # library(tidyverse)
 # library(sf)
 
@@ -47,3 +48,11 @@ cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 # http://rcompanion.org/handbook/G_06.html
 # https://magesblog.com/post/2015-08-04-generalised-linear-models-in-r/
 # https://blog.cloudera.com/blog/2015/12/common-probability-distributions-the-data-scientists-crib-sheet/
+
+## ancova, but need to check against assumptions, as pretty sure normal dist is violated
+model <- ancova(propPOC ~ sqkm_buf + type, data = df)
+summary(model)
+lsm <- lsmeans(model, ~type)
+cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
+
+
