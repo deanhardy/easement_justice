@@ -35,7 +35,7 @@ private <- st_read("data/nced_lc.shp") %>%
 #  filter(gapcat %in% c('1','2')) %>%
   mutate(type = "Easement") %>%
   st_transform(crs = utm) %>%
-  select(type, state, sitename, esmthldr, gis_acres, gapcat, purpose, geometry) %>%
+  dplyr::select(type, state, sitename, esmthldr, gis_acres, gapcat, purpose, geometry) %>%
   rename(management = esmthldr, 
          acres = gis_acres, 
          gap = gapcat)
@@ -47,7 +47,7 @@ public <- st_read("data/padus_lc.shp") %>%
   filter(GAP_Sts %in% c('1', '2')) %>%
   mutate(purpose = 'NA') %>%
   st_transform(crs = utm) %>%
-  select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
+  dplyr::select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
   rename(type = d_Own_Type, 
          state = State_Nm, 
          sitename = Unit_Nm, 
@@ -70,7 +70,7 @@ cons <- rbind(private, public) %>%
 
 # ## re-run if census variables need to be changed
 # ## define acs variables of interest
-all_vars <- load_variables(2016, 'acs5', cache = TRUE)
+# all_vars <- load_variables(2016, 'acs5', cache = TRUE)
 # vars <- c(white = "B03002_003E", black = "B03002_004E",
 #           native_american = "B03002_005E", asian = "B03002_006E",
 #           hawaiian = "B03002_007E", other = "B03002_008E",
@@ -205,15 +205,16 @@ bz_geog <- int %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_buf, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0)) %>%
-  select(rowid, tot_pop, popden, sqkm_buf, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
+  dplyr::select(rowid, tot_pop, popden, sqkm_buf, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
 df <- bz_geog %>% 
   st_transform(4326)
 
-st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
+# st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
 
 df %>%
   st_set_geometry(NULL) %>%
+  filter(state == c('GA', 'SC')) %>%
   write.csv('data/cons_data.csv', row.names = FALSE)
