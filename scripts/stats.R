@@ -37,7 +37,7 @@ lsm <- lsmeans(model, ~type)
 cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 
 ## linear mixed effects model with state jurisdiction as categorial random effect
-model <- lmer(mnmdhhinc ~ type + (type | state), data = df)
+model <- lmer(mnmdhhinc ~ type + (1 | state), data = df)
 summary(model)
 lsm <- lsmeans(model, ~type)
 cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
