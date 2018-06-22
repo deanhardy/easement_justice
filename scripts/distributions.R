@@ -5,7 +5,7 @@ library(magrittr)
 
 df <- read_csv("data/cons_data.csv")
 df_sub <- df[,c("type", "pwhite", "pblack", 
-                "pother", "platinx", "propPOC", "mnmdhhinc")]
+                "pother", "platinx", "propPOC", "mnhhinc")]
 names(df_sub)
 head(df_sub)
 # understanding if conservation land types 
@@ -17,16 +17,16 @@ head(df_sub)
 # (as a categorical random effect) and 
 # distance to shoreline (as a continuous covariate). 
 
-# response vars = mnmdhhinc; pwhite, pblack, pother, platinx, propPOC
+# response vars = mnhhinc; pwhite, pblack, pother, platinx, propPOC
 # explanatory vars = type, state, distance to shoreline
 
 # empirical cumulative distribution of hhinc by type
-ggplot(df_sub, aes(x = mnmdhhinc, group = type)) +
+ggplot(df_sub, aes(x = mnhhinc, group = type)) +
   stat_ecdf(geom = "line", aes(color = type)) + 
   theme_bw()
 
 # density plot
-ggplot(df_sub, aes(x = mnmdhhinc, group = type)) +
+ggplot(df_sub, aes(x = mnhhinc, group = type)) +
   geom_density(aes(color = type)) +
   theme_bw()
 

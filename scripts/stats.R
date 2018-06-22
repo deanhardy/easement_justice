@@ -24,14 +24,14 @@ df <- read.csv('data/cons_data.csv')
 boxplot(propPOC~type, df, notch = TRUE)
 
 df2 <-filter(df, type == 'Easement')
-hist(df2$mnmdhhinc)
+hist(df$mnhhinc)
 
 ####################################
 ## statistical analysis
 ####################################
 
 ## linear regression model with no mixed effects
-model <- glm(mnmdhhinc ~ type + state, data = df)
+model <- glm(mnhhinc ~ type + state, data = df)
 summary(model)
 lsm <- lsmeans(model, ~type)
 cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
