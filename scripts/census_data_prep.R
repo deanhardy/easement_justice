@@ -6,6 +6,10 @@ library(tigris)
 options(tigris_use_cache = TRUE)
 library(sf)
 
+## Albers Conic Equal Area projection
+## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
+alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+
 ## define acs year and region for census data import
 YR <- 2016
 # ST <- c("Georgia", "South Carolina")
@@ -49,10 +53,11 @@ ga <- get_acs(geography = "block group",
               state = 'Georgia',
               year = YR,
               output = 'wide',
-              geometry = TRUE) %>%
+              geometry = TRUE,
+              keep_geo_vars = TRUE) %>%
   st_transform(crs = alb) %>%
   mutate(sqkm_bg = as.numeric(st_area(geometry)) / 1e6, mnhhinc = agghhinc/hu) %>%
-  dplyr::select(GEOID, sqkm_bg, total, white, black, native_american, asian, hawaiian,
+  dplyr::select(GEOID, ALAND, AWATER, sqkm_bg, total, white, black, native_american, asian, hawaiian,
                 other, multiracial, latinx, medhhinc, agghhinc, hu, mnhhinc)
 
 sc <- get_acs(geography = "block group",
@@ -64,10 +69,11 @@ sc <- get_acs(geography = "block group",
               state = 'South Carolina',
               year = YR,
               output = 'wide',
-              geometry = TRUE) %>%
+              geometry = TRUE,
+              keep_geo_vars = TRUE) %>%
   st_transform(crs = alb) %>%
   mutate(sqkm_bg = as.numeric(st_area(geometry)) / 1e6, mnhhinc = agghhinc/hu) %>%
-  dplyr::select(GEOID, sqkm_bg, total, white, black, native_american, asian, hawaiian,
+  dplyr::select(GEOID, ALAND, AWATER, sqkm_bg, total, white, black, native_american, asian, hawaiian,
                 other, multiracial, latinx, medhhinc, agghhinc, hu, mnhhinc)
 
 bg <- rbind(ga, sc) %>%

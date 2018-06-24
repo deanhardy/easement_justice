@@ -5,10 +5,6 @@ library(sf)
 library(tmap)
 library(lwgeom)
 
-## Albers Conic Equal Area projection
-## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-# alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
-
 ## NAD 83 UTM 17N
 utm <- 2150
 
@@ -123,24 +119,25 @@ bz_geog <- int %>%
          black = black * perc_bginbuf,
          other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbuf,
          latinx = latinx * perc_bginbuf,
-         hu = hu * perc_bginbuf) %>%
+         hu = hu * perc_bginbuf,
+         ALAND = ALAND * perc_bginbuf) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
   group_by(rowid) %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = sum(hu, na.rm = TRUE), agghhinc = sum(agghhinc, na.rm = TRUE),
-            sqkm_buf = mean(sqkm_buf)) %>%
+            sqkm_buf = mean(sqkm_buf), ALAND = sum(ALAND)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
-         platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_buf, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0)) %>%
-  dplyr::select(rowid, tot_pop, popden, sqkm_buf, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
+         platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/ALAND, 2), propPOC = round(1 - pwhite, 2),
+         mnhhinc = round(agghhinc/hu, 0), pland = round((ALAND * 0.000001)/sqkm_buf, 2)) %>%
+  dplyr::select(rowid, tot_pop, popden, sqkm_buf, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
 df <- bz_geog %>% 
   st_transform(4326)
 
-# st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
+st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
 
 df %>%
   st_set_geometry(NULL) %>%
