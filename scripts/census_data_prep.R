@@ -4,6 +4,7 @@ library(tidyverse)
 library(tidycensus)
 library(tigris)
 options(tigris_use_cache = TRUE)
+library(sf)
 
 ## define acs year and region for census data import
 YR <- 2016
@@ -12,7 +13,7 @@ YR <- 2016
 
 ## re-run if census variables need to be changed
 ## define acs variables of interest
-# all_vars <- load_variables(2016, 'acs5', cache = TRUE)
+all_vars <- load_variables(2016, 'acs5', cache = TRUE)
 # vars <- c(white = "B03002_003E", black = "B03002_004E",
 #           native_american = "B03002_005E", asian = "B03002_006E",
 #           hawaiian = "B03002_007E", other = "B03002_008E",
@@ -72,10 +73,22 @@ sc <- get_acs(geography = "block group",
 bg <- rbind(ga, sc) %>%
   mutate(prop_POC = 1 - (white/total))
 
-## grouped median
+
+## group median
 # http://tillt.net/grouped-median-function-for-r/
+library(fdth)
 
+## using one county for testing this
+df <- get_acs(geography = "block group",
+              table = 'B19001',
+              state = 'Georgia',
+              county  = 'Chatham',
+              year = YR,
+              output = 'wide') %>%
+  select(-B19001_001E, -NAME)
+df2 <- df[, -grep('M', colnames(df))]
 
+  
 ## export census data
 bg %>% st_transform(crs = 4326) %>%
   st_write("data/bg_data.geojson", driver = 'geojson')
