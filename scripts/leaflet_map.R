@@ -16,13 +16,14 @@ m <- leaflet() %>%
   addPolygons(data = df,
               popup = paste("Site Name:", df$sitename, "<br>",
                             "Management:", df$management, "<br>",
-                            "Acres:", df$acres, "<br>",
+                            "Conservation Land Acreage:", df$acres, "<br>",
+                            "Beneficiary Zone SqKM:", df$sqkm_buf, "<br>",
                             "People of Color (%):", 100*df$propPOC, "<br>",
                             "Black (%):", 100*df$pblack, "<br>",
                             "Other race (%):", 100*df$pother, "<br>",
                             "Latinx (%):", 100*df$platinx, "<br>",
                             "White (%):", 100*df$pwhite, "<br>",
-                            "Median Household Income (US$):", df$mnmdhhinc, "<br>",
+                            "Estimated Mean Household Income (US$):", df$mnhhinc, "<br>",
                             "GAP Status:", df$gap, "<br>",
                             "Purpose:", df$purpose),
               group = "Conservation Areas",
@@ -43,7 +44,7 @@ m <- leaflet() %>%
   addScaleBar("bottomright")
 m
 
-### exploring exporting as html file for offline exploration
+## exporting as html file for exploration
 library(htmlwidgets)
 saveWidget(m, 
            file="C:/Users/dhardy/Dropbox/sesync/manuscripts/unpublished/easement_justice/R/easement_justice/docs/lowcountry_conservation.html",
