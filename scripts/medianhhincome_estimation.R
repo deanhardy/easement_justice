@@ -10,11 +10,11 @@ df <- get_acs(geography = "block group",
               table = 'B19001',
               state = 'Georgia',
               county = 'Chatham',
-              year = '2016') %>%
+              year = 2016) %>%
   select(-NAME, -moe) %>%
   rename(households = estimate) %>%
   filter(variable != 'B19001_001') %>%
-  mutate(bin_min = as.numeric(ifelse(variable == 'B19001_002', 0, 
+  mutate(bin_min = ifelse(variable == 'B19001_002', 0, 
                                      ifelse(variable == 'B19001_003', 10000, 
                                             ifelse(variable == 'B19001_004', 15000,
                                                    ifelse(variable == 'B19001_005', 20000,
@@ -29,8 +29,8 @@ df <- get_acs(geography = "block group",
                                                                                                                   ifelse(variable == 'B19001_014', 100000,
                                                                                                                          ifelse(variable == 'B19001_015', 125000,
                                                                                                                                 ifelse(variable == 'B19001_016', 150000,
-                                                                                                                                       ifelse(variable == 'B19001_017', 200000, variable))))))))))))))))),
-         bin_max = as.numeric(ifelse(variable == 'B19001_002', 9999, 
+                                                                                                                                       ifelse(variable == 'B19001_017', 200000, variable)))))))))))))))),
+         bin_max = ifelse(variable == 'B19001_002', 9999, 
                                      ifelse(variable == 'B19001_003', 14999, 
                                             ifelse(variable == 'B19001_004', 19999,
                                                    ifelse(variable == 'B19001_005', 24999,
@@ -45,10 +45,12 @@ df <- get_acs(geography = "block group",
                                                                                                                   ifelse(variable == 'B19001_014', 124999,
                                                                                                                          ifelse(variable == 'B19001_015', 149999,
                                                                                                                                 ifelse(variable == 'B19001_016', 199999,
-                                                                                                                                       ifelse(variable == 'B19001_017', NA, variable))))))))))))))))))
+                                                                                                                                       ifelse(variable == 'B19001_017', NA, variable)))))))))))))))))
+
+mydf <- df %>% mutate(interval = paste(df$bin_min, df$bin_max, sep = "-"))
 
 ## subset data for exploration of mean and median calc
-df2 <- df[1:16,]
+mydf <- mydf[1:16,]
 
 ##
 sb <- stepbins(df2$bin_max, df2$households)
@@ -65,4 +67,8 @@ integral(splb$splinePDF, 0, splb$E)
 integral(function(x){1-splb$splineCDF(x)}, 0, splb$E)
 # splb <- splinebins(df2$bin_max, df2$households, [insert mean] numIterations = 100)
 # integral(function(x){1-splb$splineCDF(x)}, 0, splb$E) # closer to given mean
+
+
+## alternative way to do this
+## https://stackoverflow.com/questions/18887382/how-to-calculate-the-median-on-grouped-dataset
 
