@@ -128,21 +128,7 @@ bg <- rbind(ga, sc, al, fl, nc) %>%
   mutate(prop_POC = 1 - (white/total))
 
 
-## group median
-# http://tillt.net/grouped-median-function-for-r/
-library(fdth)
 
-## using one county for testing this
-df <- get_acs(geography = "block group",
-              table = 'B19001',
-              state = 'Georgia',
-              county  = 'Chatham',
-              year = YR,
-              output = 'wide') %>%
-  select(-B19001_001E, -NAME)
-df2 <- df[, -grep('M', colnames(df))]
-
-  
 ## export census data
 bg %>% st_transform(crs = 4326) %>%
   st_write("data/bg_data.geojson", driver = 'geojson')
