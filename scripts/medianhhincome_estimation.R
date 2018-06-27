@@ -54,10 +54,14 @@ df <- get_acs(geography = "block group",
                                                                                                                          ifelse(variable == 'B19001_015', 149999,
                                                                                                                                 ifelse(variable == 'B19001_016', 199999,
                                                                                                                                        ifelse(variable == 'B19001_017', NA, variable))))))))))))))))) %>%
-  mutate(interval = paste(bin_min, bin_max, sep = "-"))
+  mutate(interval = paste(bin_min, bin_max, sep = "-"),
+         GEOID = as.factor(GEOID))
 
 ## define function following stackoverflow post
 # https://stackoverflow.com/questions/18887382/how-to-calculate-the-median-on-grouped-dataset
+## but revised per variables from 
+# https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
+
 GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
   # If "sep" is specified, the function will try to create the 
   #   required "intervals" matrix. "trim" removes any unwanted 
@@ -69,28 +73,34 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
     intervals <- sapply(strsplit(gsub(pattern, "", intervals), sep), as.numeric)
   }
   
-  Midpoints <- rowMeans(intervals)
   cf <- cumsum(frequencies)
   Midrow <- findInterval(max(cf)/2, cf) + 1
-  L <- intervals[1, Midrow]      # lower class boundary of median class
-  h <- diff(intervals[, Midrow]) # size of median class
-  f <- frequencies[Midrow]       # frequency of median class
-  cf2 <- cf[Midrow - 1]          # cumulative frequency class before median class
+  L <- intervals[1, Midrow]      # lower class boundary of the group containing the median 
+  w <- diff(intervals[, Midrow]) # width of median class
+  G <- frequencies[Midrow]       # frequency of median class
+  B <- cf[Midrow - 1]            # cumulative frequency of the groups before median group
   n_2 <- max(cf)/2               # total observations divided by 2
   
-  unname(L + (n_2 - cf2)/f * h)
+  unname(L + (n_2 - B)/G * w)
 }
 
 ## subset data for exploration of mean and median calc
+test <- df[df$GEOID %in% unique(df$GEOID)[2:84],]
+
 df2 <- df %>%
   select(GEOID, households, interval) %>%
-  group_by(GEOID)
+  group_by(GEOID) %>%
+  summarise(gmedian = GMedian(households, interval, sep = "-", trim = "cut"))
 
 options(warn = -1)
 GMedian(df2$households, df2$interval, sep = "-", trim = "cut")
 
-library(nlme)
-test <- gapply(df2, GMedian(df2$households, df2$interval, sep = "-", trim = "cut"), groups = GEOID)
+for(i in 1:length(unique(df$GEOID))){
+  xx <- filter(df, GEOID == unique(df$GEOID)[i])
+  outt <- GMedian(xx$households, xx$interval, sep = "-", trim = "cut")
+  print(i)
+  print(outt)
+  }
 
 
 
