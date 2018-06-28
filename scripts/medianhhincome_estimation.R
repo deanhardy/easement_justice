@@ -8,7 +8,7 @@ rm(list=ls())
 
 # define variables 
 YR <- 2016
-ST <- 'Georgia'
+ST <- 'South Carolina'
 
 ## load libraryies
 library(tidycensus)
@@ -18,7 +18,6 @@ library(tidyverse)
 df <- get_acs(geography = "block group",
               table = 'B19001',
               state = ST,
-              county = 'Chatham',
               year = YR) %>%
   select(-NAME, -moe) %>%
   rename(households = estimate) %>%
