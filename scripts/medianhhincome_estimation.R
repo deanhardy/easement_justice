@@ -4,6 +4,7 @@
 ## https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
 
 rm(list=ls())
+#options(warn = -1)
 
 # define variables 
 YR <- 2016
@@ -78,29 +79,45 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
   L <- intervals[1, Midrow]      # lower class boundary of the group containing the median 
   w <- diff(intervals[, Midrow]) # width of median class
   G <- frequencies[Midrow]       # frequency of median class
-  B <- cf[Midrow - 1]            # cumulative frequency of the groups before median group
+  B <- ifelse(Midrow > 1, cf[Midrow - 1], as.vector(0))  # cumulative frequency of the groups before median group
   n_2 <- max(cf)/2               # total observations divided by 2
   
   unname(L + (n_2 - B)/G * w)
 }
 
+# df2 <- df[1:84,]
+# 
+# frequencies <- df$households[85:3280]
+# intervals <- df$interval[1:84]
+# sep <- "-"
+# trim <- "cut"
+# i2 <- if (!is.null(sep)) {
+#   if (is.null(trim)) pattern <- ""
+#   else if (trim == "cut") pattern <- "\\[|\\]|\\(|\\)"
+#   else pattern <- trim
+#   intervals <- sapply(strsplit(gsub(pattern, "", intervals), '-'), as.numeric)
+# }
+  
 ## subset data for exploration of mean and median calc
-test <- df[df$GEOID %in% unique(df$GEOID)[2:84],]
+# test <- df[df$GEOID %in% unique(df$GEOID)[135:200],]
+
+# ## from Jessica, but realized didn't need for loop and that function 
+# ## would work in dplyr pipe after mods to function
+# for(i in 1:length(unique(df$GEOID))){
+#   xx <- filter(df, GEOID == unique(df$GEOID)[i])
+#   outt <- GMedian(xx$households, xx$interval, sep = "-", trim = "cut")
+#   print(i)
+#   print(outt)
+#   }
 
 df2 <- df %>%
   select(GEOID, households, interval) %>%
   group_by(GEOID) %>%
+  filter(sum(households) > 0) %>%
   summarise(gmedian = GMedian(households, interval, sep = "-", trim = "cut"))
 
-options(warn = -1)
-GMedian(df2$households, df2$interval, sep = "-", trim = "cut")
 
-for(i in 1:length(unique(df$GEOID))){
-  xx <- filter(df, GEOID == unique(df$GEOID)[i])
-  outt <- GMedian(xx$households, xx$interval, sep = "-", trim = "cut")
-  print(i)
-  print(outt)
-  }
+
 
 
 
