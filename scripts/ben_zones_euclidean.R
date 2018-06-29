@@ -62,31 +62,6 @@ cons <- rbind(private, public) %>%
 bg <- st_read("data/bg_data.geojson") %>%
   st_transform(crs = utm)
 
-# fig <- tm_shape(bg) +
-#   tm_fill('prop_POC', palette = "Greys",
-#           title = "People of Color") +
-#   tm_shape(cons) +
-#   tm_fill('type', legend.show = TRUE) +
-#   tm_shape(lc) +
-#   tm_borders(col = 'black') +
-#   tm_layout(title = "Lowcountry Conservation Areas (n = 323)",
-#             frame = FALSE,
-#             outer.margins=c(0,0,0,0),
-#             inner.margins=c(0,0,0,0), asp=0) +
-#   tm_compass(type = "arrow", size = 5, position = c(0.61, 0.09)) +
-#   tm_scale_bar(breaks = c(0,100), size = 1.2, position= c(0.57, 0.02)) +
-#   tm_legend(position = c(0.8, 0.04),
-#             bg.color = "white",
-#             frame = TRUE,
-#             legend.text.size = 1.2,
-#             legend.title.size = 1.5)
-# fig
-# 
-# tiff('figures/cons_race.tiff', res = 300, units = 'in',
-#      height = 9, width = 10, compression = 'lzw')
-# fig
-# dev.off()
-
 
 
 ###################################################
@@ -111,9 +86,17 @@ buf <- cons %>%
 int <- as.tibble(st_intersection(buf, bg))
 
 ## proportional area adjustment/allocation method
-bz_geog <- int %>%
+percBGinBUF <- int %>%
   mutate(sqkm_bginbuf = as.numeric(st_area(geometry) / 1e6)) %>%
-  mutate(perc_bginbuf = (sqkm_bginbuf/sqkm_bg)) %>%
+  mutate(perc_bginbuf = (sqkm_bginbuf/sqkm_bg))
+
+## write percBGinBUF data out to use in med HH income estimation
+percBGinBUF %>%
+  data.frame() %>%
+  select(GEOID, perc_bginbuf) %>%
+  write.csv('data/percBGinBUF.csv')
+
+bz_geog <- percBGinBUF %>%
   mutate(tot_pop = total * perc_bginbuf,
          white = white * perc_bginbuf, 
          black = black * perc_bginbuf,
@@ -137,9 +120,33 @@ bz_geog <- int %>%
 df <- bz_geog %>% 
   st_transform(4326)
 
-st_write(df,'data/bz_data_erp.geojson', driver = 'geojson', delete_layer = TRUE)
+st_write(df,'data/bz_data_prelim.geojson', driver = 'geojson', delete_layer = TRUE)
 
-df %>%
-  st_set_geometry(NULL) %>%
-  filter(state == c('GA', 'SC')) %>%
-  write.csv('data/cons_data.csv', row.names = FALSE)
+
+
+
+
+# fig <- tm_shape(bg) +
+#   tm_fill('prop_POC', palette = "Greys",
+#           title = "People of Color") +
+#   tm_shape(cons) +
+#   tm_fill('type', legend.show = TRUE) +
+#   tm_shape(lc) +
+#   tm_borders(col = 'black') +
+#   tm_layout(title = "Lowcountry Conservation Areas (n = 323)",
+#             frame = FALSE,
+#             outer.margins=c(0,0,0,0),
+#             inner.margins=c(0,0,0,0), asp=0) +
+#   tm_compass(type = "arrow", size = 5, position = c(0.61, 0.09)) +
+#   tm_scale_bar(breaks = c(0,100), size = 1.2, position= c(0.57, 0.02)) +
+#   tm_legend(position = c(0.8, 0.04),
+#             bg.color = "white",
+#             frame = TRUE,
+#             legend.text.size = 1.2,
+#             legend.title.size = 1.5)
+# fig
+# 
+# tiff('figures/cons_race.tiff', res = 300, units = 'in',
+#      height = 9, width = 10, compression = 'lzw')
+# fig
+# dev.off()
