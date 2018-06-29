@@ -1,4 +1,4 @@
-## this script calculates the median from grouped (aka binned) household income data from the census
+## this script calculates an estimated median from grouped (aka binned) household income data
 
 ## good explanation for how this works mathematically and upon which the function below is based
 ## https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
@@ -6,18 +6,23 @@
 rm(list=ls())
 #options(warn = -1)
 
-# define variables 
+## define variables 
 YR <- 2016
-ST <- 'South Carolina'
+ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
+bg <- NULL # used in for loop
 
-## load libraryies
-library(tidycensus)
+## load libraries
 library(tidyverse)
+library(tidycensus)
+options(tigris_use_cache = TRUE)
 
 ## download hh income distribution tables for block groups & label bins
-df <- get_acs(geography = "block group",
+
+
+for(i in 1:length(ST)) {
+  OUT <- get_acs(geography = "block group",
               table = 'B19001',
-              state = ST,
+              state = ST[[i]],
               year = YR) %>%
   select(-NAME, -moe) %>%
   rename(households = estimate) %>%
@@ -56,6 +61,9 @@ df <- get_acs(geography = "block group",
                                                                                                                                        ifelse(variable == 'B19001_017', NA, variable))))))))))))))))) %>%
   mutate(interval = paste(bin_min, bin_max, sep = "-"),
          GEOID = as.factor(GEOID))
+  
+  bg <- rbind(bg, OUT)
+}
 
 ## define function following stackoverflow post
 # https://stackoverflow.com/questions/18887382/how-to-calculate-the-median-on-grouped-dataset
@@ -109,8 +117,8 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 #   print(outt)
 #   }
 
-df2 <- df %>%
-  select(GEOID, households, interval) %>%
+bg2 <- bg %>%
+  dplyr::select(GEOID, households, interval) %>%
   group_by(GEOID) %>%
   filter(sum(households) > 0) %>%
   summarise(gmedian = GMedian(households, interval, sep = "-", trim = "cut"))
@@ -129,23 +137,23 @@ df2 <- df %>%
 ## a much more involved way following von Hippel et al 2017
 # https://cran.r-project.org/web/packages/binsmooth/index.html
 
-library(binsmooth)
-# library(binequality) # see von Hippel et al 2016
-
-##
-sb <- stepbins(df2$bin_max, df2$households)
-splb <- splinebins(df2$bin_max, df2$households)
-splb[["est_mean"]]
-
-## plot spline of PDF and stepPDF
-plot(splb$splinePDF, 0, 50000, n=500)
-plot(sb$stepPDF, do.points=FALSE, col="gray", add=TRUE)
-# notice that the curve preserves bin area
-
-library(pracma)
-integral(splb$splinePDF, 0, splb$E)
-integral(function(x){1-splb$splineCDF(x)}, 0, splb$E)
-# splb <- splinebins(df2$bin_max, df2$households, [insert mean] numIterations = 100)
-# integral(function(x){1-splb$splineCDF(x)}, 0, splb$E) # closer to given mean
+# library(binsmooth)
+# # library(binequality) # see von Hippel et al 2016
+# 
+# ##
+# sb <- stepbins(df2$bin_max, df2$households)
+# splb <- splinebins(df2$bin_max, df2$households)
+# splb[["est_mean"]]
+# 
+# ## plot spline of PDF and stepPDF
+# plot(splb$splinePDF, 0, 50000, n=500)
+# plot(sb$stepPDF, do.points=FALSE, col="gray", add=TRUE)
+# # notice that the curve preserves bin area
+# 
+# library(pracma)
+# integral(splb$splinePDF, 0, splb$E)
+# integral(function(x){1-splb$splineCDF(x)}, 0, splb$E)
+# # splb <- splinebins(df2$bin_max, df2$households, [insert mean] numIterations = 100)
+# # integral(function(x){1-splb$splineCDF(x)}, 0, splb$E) # closer to given mean
 
 
