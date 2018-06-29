@@ -59,11 +59,14 @@ for(i in 1:length(ST)) {
                                                                                                                          ifelse(variable == 'B19001_015', 149999,
                                                                                                                                 ifelse(variable == 'B19001_016', 199999,
                                                                                                                                        ifelse(variable == 'B19001_017', NA, variable))))))))))))))))) %>%
-  mutate(interval = paste(bin_min, bin_max, sep = "-"),
-         GEOID = as.factor(GEOID))
+  mutate(interval = paste(bin_min, bin_max, sep = "-"))
   
   bg <- rbind(bg, OUT)
 }
+
+## read in percent BG in buffer zone data
+percBGinBUF <- readRDS('data/percBGinBUF.rds')
+
 
 ## define function following stackoverflow post
 # https://stackoverflow.com/questions/18887382/how-to-calculate-the-median-on-grouped-dataset
@@ -117,15 +120,23 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 #   print(outt)
 #   }
 
+test <- left_join(bg, percBGinBUF, by = "GEOID")
+  
 bg2 <- bg %>%
-  dplyr::select(GEOID, households, interval) %>%
   group_by(GEOID) %>%
+  summarise(eHH = ifelse(GEOID == percBGinBUF$GEOID, households * percBGinBUF$perc_bginbuf, 'NA'))
+
+
+  dplyr::select(GEOID, households, interval) %>%
   filter(sum(households) > 0) %>%
   summarise(gmedian = GMedian(households, interval, sep = "-", trim = "cut"))
 
 
 
-
+df %>%
+  st_set_geometry(NULL) %>%
+  filter(state == c('GA', 'SC')) %>%
+  write.csv('data/cons_data.csv', row.names = FALSE)
 
 
 ############################################

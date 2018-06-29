@@ -93,8 +93,9 @@ percBGinBUF <- int %>%
 ## write percBGinBUF data out to use in med HH income estimation
 percBGinBUF %>%
   data.frame() %>%
-  select(GEOID, perc_bginbuf) %>%
-  write.csv('data/percBGinBUF.csv')
+  mutate(GEOID = as.character(GEOID)) %>%
+  select(rowid, GEOID, perc_bginbuf) %>%
+  saveRDS('data/percBGinBUF.rds')
 
 bz_geog <- percBGinBUF %>%
   mutate(tot_pop = total * perc_bginbuf,
