@@ -120,16 +120,22 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 #   print(outt)
 #   }
 
-test <- left_join(bg, percBGinBUF, by = "GEOID")
-  
 bg2 <- bg %>%
-  group_by(GEOID) %>%
-  summarise(eHH = ifelse(GEOID == percBGinBUF$GEOID, households * percBGinBUF$perc_bginbuf, 'NA'))
+  left_join(percBGinBUF, by = "GEOID") %>%
+  filter(perc_bginbuf != 'NA') %>%
+  mutate(eHH = households * perc_bginbuf)
+bg3 <- bg2 %>%
+  mutate(ID = group_indices_(bg2, .dots = c('rowid', 'GEOID')),
+         GEOID = as.factor(GEOID))
+  
 
-
-  dplyr::select(GEOID, households, interval) %>%
-  filter(sum(households) > 0) %>%
-  summarise(gmedian = GMedian(households, interval, sep = "-", trim = "cut"))
+bg4 <- bg3 %>%
+  group_by(ID) %>%
+  filter(sum(eHH) > 0) %>%
+  summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = "cut"),
+            perc_bginbuf = mean(perc_bginbuf),
+            GEOID = GEOID[[1]],
+            rowid = mean(rowid))
 
 
 
