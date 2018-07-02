@@ -119,7 +119,12 @@ bz_geog <- percBGinBUF %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
+## import gmedian estimates for hh income
+emed <- readRDS('data/gmedian.rds') %>%
+  rename(rowid = BUFID, emedhhinc = gmedian)
+
 df <- bz_geog %>% 
+  merge(emed, by = "rowid") %>%
   st_transform(4326)
 
 st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
