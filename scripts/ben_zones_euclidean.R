@@ -5,9 +5,9 @@ library(sf)
 library(tmap)
 library(lwgeom)
 
-## NAD 83 UTM 17N
-utm <- 2150
-
+## define variables
+utm <- 2150 ## NAD83 17N
+alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 
 ##############################################################
@@ -56,11 +56,12 @@ public <- st_read("data/padus_lc.shp") %>%
 #   filter(GAP_Sts %in% c('1', '2'))
 
 cons <- rbind(private, public) %>%
-  rowid_to_column()
+  rowid_to_column() %>%
+  st_transform(crs = alb)
 
 ## import census data
 bg <- st_read("data/bg_data.geojson") %>%
-  st_transform(crs = utm)
+  st_transform(crs = alb)
 
 
 
@@ -121,7 +122,12 @@ bz_geog <- percBGinBUF %>%
 df <- bz_geog %>% 
   st_transform(4326)
 
-st_write(df,'data/bz_data_prelim.geojson', driver = 'geojson', delete_layer = TRUE)
+st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
+
+df %>%
+  st_set_geometry(NULL) %>%
+  filter(state == c('GA', 'SC')) %>%
+  write.csv('data/cons_data.csv', row.names = FALSE)
 
 
 
