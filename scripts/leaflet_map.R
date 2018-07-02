@@ -3,7 +3,7 @@ rm(list=ls())
 library(leaflet)
 library(sf)
 
-df <- st_read("data/bz_data_erp.geojson")
+df <- st_read("data/bz_data.geojson")
 bf <- st_read('data/ben_zones.geojson')
 
 pal <- colorFactor(rainbow(3), df$type)
@@ -24,7 +24,8 @@ m <- leaflet() %>%
                             "Other race (%):", 100*df$pother, "<br>",
                             "Latinx (%):", 100*df$platinx, "<br>",
                             "White (%):", 100*df$pwhite, "<br>",
-                            "Estimated Mean Household Income (US$):", df$mnhhinc, "<br>",
+                            "Estimated Median HH Income (US$):", round(df$emedhhinc, 0), "<br>",
+                            "Estimated Mean HH Income (US$):", df$mnhhinc, "<br>",
                             "GAP Status:", df$gap, "<br>",
                             "Purpose:", df$purpose),
               group = "Conservation Areas",
