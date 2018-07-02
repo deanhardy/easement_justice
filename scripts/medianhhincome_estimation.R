@@ -11,7 +11,6 @@ rm(list=ls())
 YR <- 2016
 ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
 bg <- NULL # used in for loop
-alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 ## load libraries
 library(tidyverse)
@@ -73,7 +72,7 @@ for(i in 1:length(ST)) {
 # https://stackoverflow.com/questions/18887382/how-to-calculate-the-median-on-grouped-dataset
 ## but revised per variables from 
 # https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
-
+## B modified to account for when median group is the 0-9999 bin
 GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
   # If "sep" is specified, the function will try to create the 
   #   required "intervals" matrix. "trim" removes any unwanted 
@@ -96,36 +95,6 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
   unname(L + (n_2 - B)/G * w)
 }
 
-# df2 <- df[1:84,]
-# 
-# frequencies <- df$households[85:3280]
-# intervals <- df$interval[1:84]
-# sep <- "-"
-# trim <- "cut"
-# i2 <- if (!is.null(sep)) {
-#   if (is.null(trim)) pattern <- ""
-#   else if (trim == "cut") pattern <- "\\[|\\]|\\(|\\)"
-#   else pattern <- trim
-#   intervals <- sapply(strsplit(gsub(pattern, "", intervals), '-'), as.numeric)
-# }
-  
-## subset data for exploration of mean and median calc
-# test <- df[df$GEOID %in% unique(df$GEOID)[135:200],]
-
-# ## from Jessica, but realized didn't need for loop and that function 
-# ## would work in dplyr pipe after mods to function
-# for(i in 1:length(unique(df$GEOID))){
-#   xx <- filter(df, GEOID == unique(df$GEOID)[i])
-#   outt <- GMedian(xx$households, xx$interval, sep = "-", trim = "cut")
-#   print(i)
-#   print(outt)
-#   }
-
-# bg2 <- bg %>% mutate(interval = factor(interval, levels = c("0-9999", "10000-14999", "15000-19999", "20000-24999",
-#                                                       "25000-29999", "30000-34999", "35000-39999", "40000-44999",
-#                                                       "45000-49999", "50000-59999", "60000-74999", "75000-99999",
-#                                                       "1e+05-124999", "125000-149999", "150000-199999", "2e+05-NA")))
-
 bg2 <- bg %>%
   left_join(percBGinBUF, by = "GEOID") %>%
   filter(perc_bginbuf != 'NA') %>%
@@ -138,7 +107,6 @@ bg2 <- bg %>%
 ggplot(bg2, aes(x = gmedian)) +
   geom_density() +
   theme_bw()
-
 
 df %>%
   st_set_geometry(NULL) %>%
