@@ -63,6 +63,10 @@ cons <- rbind(private, public) %>%
 bg <- st_read("data/bg_data.geojson") %>%
   st_transform(crs = alb)
 
+# density plot
+ggplot(bg, aes(x = hawaiian)) +
+  geom_density() +
+  theme_bw()
 
 
 ###################################################
@@ -103,6 +107,7 @@ bz_geog <- percBGinBUF %>%
          white = white * perc_bginbuf, 
          black = black * perc_bginbuf,
          other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbuf,
+         #other = multiracial * perc_bginbuf,
          latinx = latinx * perc_bginbuf,
          hu = hu * perc_bginbuf,
          ALAND = ALAND * perc_bginbuf) %>%
@@ -118,6 +123,11 @@ bz_geog <- percBGinBUF %>%
   dplyr::select(rowid, tot_pop, popden, sqkm_buf, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
+
+# density plot
+ggplot(bz_geog, aes(x = pother, group = type)) +
+  geom_density(aes(color = type)) +
+  theme_bw()
 
 ## import gmedian estimates for hh income
 emed <- readRDS('data/gmedian.rds') %>%
