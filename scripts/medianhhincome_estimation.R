@@ -96,7 +96,7 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 }
 
 bg2 <- bg %>%
-  left_join(percBGinBUF, by = "GEOID") %>%
+  left_join(buf, by = "GEOID") %>%
   filter(perc_bginbuf != 'NA') %>%
   mutate(eHH = households * perc_bginbuf) %>%
   group_by(BUFID, variable) %>%
@@ -108,10 +108,7 @@ ggplot(bg2, aes(x = gmedian)) +
   geom_density() +
   theme_bw()
 
-df %>%
-  st_set_geometry(NULL) %>%
-  filter(state == c('GA', 'SC')) %>%
-  write.csv('data/cons_data.csv', row.names = FALSE)
+saveRDS(bg2, file = 'data/gmedian.rds')
 
 
 ############################################
