@@ -1,4 +1,5 @@
-## this script calculates an estimated median from grouped (aka binned) household income data
+## this script calculates an estimated median from grouped (aka binned) household income data 
+## within an area that overlaps several block groups
 
 ## good explanation for how this works mathematically and upon which the function below is based
 ## https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
@@ -10,15 +11,19 @@ rm(list=ls())
 YR <- 2016
 ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
 bg <- NULL # used in for loop
+alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 ## load libraries
 library(tidyverse)
 library(tidycensus)
 options(tigris_use_cache = TRUE)
+library(sf)
+
+## read in percent BG in buffer zone data
+buf <- readRDS('data/percBGinBUF.rds') %>%
+  rename(BUFID = rowid)
 
 ## download hh income distribution tables for block groups & label bins
-
-
 for(i in 1:length(ST)) {
   OUT <- get_acs(geography = "block group",
               table = 'B19001',
@@ -63,10 +68,6 @@ for(i in 1:length(ST)) {
   
   bg <- rbind(bg, OUT)
 }
-
-## read in percent BG in buffer zone data
-percBGinBUF <- readRDS('data/percBGinBUF.rds')
-
 
 ## define function following stackoverflow post
 # https://stackoverflow.com/questions/18887382/how-to-calculate-the-median-on-grouped-dataset
@@ -120,23 +121,23 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 #   print(outt)
 #   }
 
+# bg2 <- bg %>% mutate(interval = factor(interval, levels = c("0-9999", "10000-14999", "15000-19999", "20000-24999",
+#                                                       "25000-29999", "30000-34999", "35000-39999", "40000-44999",
+#                                                       "45000-49999", "50000-59999", "60000-74999", "75000-99999",
+#                                                       "1e+05-124999", "125000-149999", "150000-199999", "2e+05-NA")))
+
 bg2 <- bg %>%
   left_join(percBGinBUF, by = "GEOID") %>%
   filter(perc_bginbuf != 'NA') %>%
-  mutate(eHH = households * perc_bginbuf)
-bg3 <- bg2 %>%
-  mutate(ID = group_indices_(bg2, .dots = c('rowid', 'GEOID')),
-         GEOID = as.factor(GEOID))
-  
+  mutate(eHH = households * perc_bginbuf) %>%
+  group_by(BUFID, variable) %>%
+  summarise(interval = interval[[1]], eHH = sum(eHH), households = sum(households)) %>%
+  summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = 'cut'))
 
-bg4 <- bg3 %>%
-  group_by(ID) %>%
-  filter(sum(eHH) > 0) %>%
-  summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = "cut"),
-            perc_bginbuf = mean(perc_bginbuf),
-            GEOID = GEOID[[1]],
-            rowid = mean(rowid))
-
+# density plot
+ggplot(bg2, aes(x = gmedian)) +
+  geom_density() +
+  theme_bw()
 
 
 df %>%
