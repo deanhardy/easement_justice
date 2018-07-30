@@ -5,7 +5,7 @@ library(magrittr)
 
 df <- read_csv("data/cons_data.csv")
 df_sub <- df[,c("type", "pwhite", "pblack", 
-                "pother", "platinx", "propPOC", "mnhhinc")]
+                "pother", "platinx", "propPOC", "mnhhinc", "emedhhinc")]
 names(df_sub)
 head(df_sub)
 # understanding if conservation land types 
@@ -20,8 +20,8 @@ head(df_sub)
 # response vars = mnhhinc; pwhite, pblack, pother, platinx, propPOC
 # explanatory vars = type, state, distance to shoreline
 
-# empirical cumulative distribution of hhinc by type
-ggplot(df_sub, aes(x = mnhhinc, group = type)) +
+# empirical cumulative distribution of emedhhinc by type
+ggplot(df_sub, aes(x = emedhhinc, group = type)) +
   stat_ecdf(geom = "line", aes(color = type)) + 
   theme_bw()
 
@@ -33,7 +33,7 @@ ggplot(df_sub, aes(x = mnhhinc, group = type)) +
 # empirical cumulative distributions of demographics
 df_sub %>% 
   tidyr::gather(demographic, proportion, pwhite:propPOC) %>%
-  dplyr::filter(demographic != "pother") %>%
+  dplyr::filter(demographic != "propPOC") %>%
   ggplot(aes(x = proportion, group = type)) +
   stat_ecdf(geom = "line", aes(color = type)) +
   facet_wrap(~demographic, scales = "free") +
@@ -42,7 +42,7 @@ df_sub %>%
 # kernel density plots of deomgraphic distributions
 df_sub %>% 
   tidyr::gather(demographic, proportion, pwhite:propPOC) %>%
-  dplyr::filter(demographic != "pother") %>%
+  dplyr::filter(demographic != "propPOC") %>%
   ggplot(aes(x = proportion, group = type)) +
   geom_density(aes(color = type)) +
   facet_wrap(~demographic, scales = "free") +

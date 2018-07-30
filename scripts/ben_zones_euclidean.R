@@ -45,6 +45,22 @@ public <- st_read("data/padus_lc.shp") %>%
          acres = GIS_Acres, 
          gap = GAP_Sts)
 
+## import protected SC-TNC data for SC
+## DO NOT SHARE DATA
+tnc <- st_read("C:/Users/dhardy/Documents/gis/sc_tnc_data/SC_Private_Protection_March2018.shp") #%>%
+  # filter(Own_Type %in% c("FED", "STAT"),
+  #        Category != "Easement") %>%
+  # filter(GAP_Sts %in% c('1', '2')) %>%
+  # mutate(purpose = 'NA') %>%
+  # st_transform(crs = utm) %>%
+  # dplyr::select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
+  # rename(type = d_Own_Type, 
+  #        state = State_Nm, 
+  #        sitename = Unit_Nm, 
+  #        management = d_Mang_Nam, 
+  #        acres = GIS_Acres, 
+  #        gap = GAP_Sts)
+
 # fed <- st_read("data/padus_lc.shp") %>%
 #   filter(Own_Type == "FED",
 #          Category != "Easement") %>%
