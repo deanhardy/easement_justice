@@ -4,7 +4,7 @@
 ##  BLN, 02 jul 2018; cont'd 17 Aug 2018
 ########################################
 
-ease <- read.csv(file='/home/nuse/helping_folks/Dean_easements/cons_data.csv', stringsAsFactors = F)
+ease <- read.csv(file='./data/cons_data.csv', stringsAsFactors = F)
 
 ### empirical cumulative distributions
 plot.ecdf(ecdf(ease$emedhhinc[ease$type == "Easement"]), col = "green")
