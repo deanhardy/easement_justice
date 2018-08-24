@@ -1,6 +1,7 @@
 rm(list=ls())
 
 library(leaflet)
+library(leaflet.extras)
 library(sf)
 
 df <- st_read("data/bz_data.geojson")
@@ -13,6 +14,7 @@ m <- leaflet() %>%
   addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
   setView(lng = -81, lat = 33, zoom = 7) %>%
+  addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
   addPolygons(data = df,
               popup = paste("Site Name:", df$sitename, "<br>",
                             "Management:", df$management, "<br>",
