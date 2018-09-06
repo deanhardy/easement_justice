@@ -15,7 +15,10 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 ##############################################################
 
 ## import lowcountry region boundary
-lc <- st_read("data/lowcountry.shp") %>%
+lc3 <- st_read("data/lowcountry_l3.shp") %>%
+  st_transform(utm)
+
+lc4 <- st_read("data/lowcountry_l4.shp") %>%
   st_transform(utm)
 
 ## import NCED data for low country region in SC & GA
