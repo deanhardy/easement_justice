@@ -124,6 +124,8 @@ padus2 <- padus %>% filter(!(id %in% padus_del$id.1))
 ## combine filtered data
 dat2 <- rbind(nced, tnc2, padus2)
 
+st_write(dat2, file.path(datadir, 'cons_lands.geojson'), driver = 'geojson')
+
 ## plot data
 fig <- tm_shape(t3) + tm_fill(col = 'grey95') +
   tm_shape(t2) + tm_borders(col = 'grey65') +
