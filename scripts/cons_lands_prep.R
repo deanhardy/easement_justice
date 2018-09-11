@@ -24,44 +24,57 @@ t3 <- st_read(file.path(datadir, "lc_tier3.shp")) %>%
 ## DO NOT SHARE DATA
 tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
   st_transform(crs = utm) %>%
-  # filter(OwnType %in% c("Private", "NGO", "<NA>")) %>%
-  mutate(source = 'tnc', sqkm = as.numeric(st_area(geometry) / 1e6), 
-         purpose = 'NA', state = 'SC', gap = 'NA') %>%
+  mutate(source = 'tnc', acres = as.numeric(st_area(geometry) * 0.00024710538), 
+         purpose = PurposeCde, state = 'SC', gap = 'NA') %>%
   dplyr::select(OwnType, HoldType, EsmtHldr, SiteName, PubAccess, state,
-                sqkm, gap, PurposeCde, ORIG_FID, ecorg_tier, source, geometry) %>%
+                acres, gap, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
   rename(owntype = OwnType,
          mgmttype = HoldType,
          management = EsmtHldr,
          orig_id = ORIG_FID,
          sitename = SiteName,
-         purpose = PurposeCde,
          access = PubAccess)  %>%
+  mutate(mgmttype = ifelse(mgmttype %in% c('County', 'Local Government'), 'LOC',
+                           ifelse(mgmttype == 'Federal', 'FED',
+                                  ifelse(mgmttype == 'NGO/Local Government', 'JNT', 
+                                         ifelse(mgmttype == 'NGO', 'NGO', 'UNK'))))) %>%
+  mutate(owntype = ifelse(owntype %in% c('County', 'Local Government', 'Municipality'), 'LOC',
+                          ifelse(owntype %in% c('State', 'State Government'), 'STAT',
+                                 ifelse(owntype == 'Federal', 'FED', 
+                                        ifelse(owntype == 'NGO/Local Government', 'JNT',
+                                               ifelse(owntype == 'Private', 'PVT',
+                                                      ifelse(owntype == 'Regional Agency', 'DIST', 
+                                                             ifelse(owntype == 'NGO', 'NGO', 'UNK')))))))) %>%
   mutate(access = ifelse(access %in% c('Closed', 'No', 'NO'),'XA', 
                           ifelse(access %in% c(NA, 363.138382858769), 'UK', 
                                  ifelse(access %in% c('Restricted', 'Limited', 'Limited Access'), 'RA',
-                                        ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', NA)))))
+                                        ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', access))))) %>%
+  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
+                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', 'UNK')))
 
 ## import NCED data for coastal plain (lc tier 3) region in SC & GA
 nced <- st_read(file.path(datadir, "nced.shp")) %>%
   st_transform(crs = utm) %>%
   # filter(owntype %in% c('PVT', 'NGO')) %>%
-  mutate(source = 'nced', sqkm = as.numeric(st_area(geometry) / 1e6)) %>%
+  mutate(source = 'nced', acres = as.numeric(st_area(geometry) * 0.00024710538)) %>%
   dplyr::select(owntype, eholdtype, esmthldr, sitename, pubaccess, state, 
-                sqkm, gapcat, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
+                acres, gapcat, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
   rename(management = esmthldr, 
         gap = gapcat,
         access = pubaccess,
         orig_id = ORIG_FID,
-        mgmttype = eholdtype)
+        mgmttype = eholdtype)%>%
+  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
+                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', 'UNK')))
 
 ## import PAD-US data
 padus <- st_read(file.path(datadir, "padus.shp")) %>%
   st_transform(crs = utm) %>%
   # filter(Own_Type != "PVT", Own_Type != "NGO") %>%
-  mutate(source = 'padus', sqkm = as.numeric(st_area(geometry) / 1e6), 
+  mutate(source = 'padus', acres = as.numeric(st_area(geometry) * 0.00024710538), 
          purpose = 'NA') %>%
   dplyr::select(Own_Type, Mang_Type, Loc_Mang, Unit_Nm, Access, State_Nm,
-                sqkm, GAP_Sts, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
+                acres, GAP_Sts, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
   rename(owntype = Own_Type,
          state = State_Nm,
          sitename = Unit_Nm,
@@ -69,17 +82,55 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
          mgmttype = Mang_Type,
          gap = GAP_Sts,
          access = Access,
-         orig_id = ORIG_FID)
+         orig_id = ORIG_FID) %>%
+  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
+                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', 'UNK')))
 
 dat <- rbind(nced, padus, tnc)
 
-st_write(dat, file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
+## exploring the data
+table(dat$source, dat$conscat)
 
+
+# st_write(dat, file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
+# st_write(dat, file.path(datadir, 'tnc_rc.shp'), driver = 'ESRI Shapefile')
+# st_write(dat, file.path(datadir, 'nced_rc.shp'), driver = 'ESRI Shapefile')
+# st_write(dat, file.path(datadir, 'padus_rc.shp'), driver = 'ESRI Shapefile')
+
+## filtering the data sets
+tnc2 <- filter(tnc, conscat == 'Private')
+nced2 <- filter(nced, conscat == 'Private')
+padus2 <- filter(padus, conscat == 'Public')
+dat2 <- rbind(nced2, padus2, tnc2)
+
+dat3 <- dat2 %>% filter(ecorg_tier == 1)
+table(dat3$source, dat3$conscat)
+
+options("scipen"=100, "digits"=4)
+# options("scipen"=0, "digits"=7) ## default
+
+## examine intersection of data sets
+ncedxtnc <- st_intersection(nced2, tnc2) %>%
+  mutate(acres_nced_tnc = acres - acres.1,
+         acres_in_tnc = as.numeric(st_area(geometry) * 0.00024710538)) %>%
+  mutate(prop_in_tnc = acres_in_tnc/acres)
+
+ncedxpadus <- st_intersection(nced2, padus2) %>%
+  mutate(acres_nced_padus = acres - acres.1,
+         acres_in_padus = as.numeric(st_area(geometry) * 0.00024710538)) %>%
+  mutate(prop_in_padus = acres_in_padus/acres)
+
+d <- st_difference(nced2, tnc2)
+
+## plot data
 fig <- tm_shape(t3) + tm_fill(col = 'grey95') +
   tm_shape(t2) + tm_borders(col = 'grey65') +
   tm_shape(t1) + tm_borders(col = 'grey40') +
-  tm_shape(dat) + 
-  tm_fill(col = 'source', alpha = 0.5, palette = c('red', 'green', 'yellow'))
+  tm_shape(dat3) + 
+  tm_fill(col = 'source', alpha = 0.5, palette = c('red', 'green', 'yellow')) 
+  # tm_shape(ncedxtnc) + 
+  # tm_borders(col = 'purple')
+# fig
 
 tiff('figures/conslands_by_source.tiff', compression = 'lzw', units = 'in',
      height = 5, width = 7, res = 300)
