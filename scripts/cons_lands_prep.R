@@ -121,8 +121,20 @@ hist(ncedxpadus$prop_in_padus)
 padus_del <- filter(ncedxpadus, prop_in_padus >= 0.8)
 padus2 <- padus %>% filter(!(id %in% padus_del$id.1))
 
+## examine intersection of PADUS & TNC data sets
+padusxtnc <- st_intersection(padus2, tnc2) %>%
+  mutate(acres_padus_tnc = acres - acres.1,
+         acres_in_tnc = as.numeric(st_area(geometry) * 0.00024710538)) %>%
+  mutate(prop_in_tnc = acres_in_tnc/acres)
+hist(padusxtnc$prop_in_tnc)
+
+## select observations with high overlap & filter original data to delete overlapping observations
+tnc2_del <- filter(padusxtnc, prop_in_tnc >= 0.8)
+padus3 <- padus2 %>% filter(!(id %in% tnc2_del$id.1))
+
+
 ## combine filtered data
-dat2 <- rbind(nced, tnc2, padus2)
+dat2 <- rbind(nced, tnc2, padus3)
 
 ## export cons lands data
 dat2 %>% st_transform(crs = 4326) %>%
@@ -142,7 +154,7 @@ tiff('figures/conslands_by_source.tiff', compression = 'lzw', units = 'in',
      height = 5, width = 7, res = 300)
 fig
 dev.off()
-  
+
 
 ## filtering the data sets
 # tnc2 <- filter(tnc, conscat == 'Private')
