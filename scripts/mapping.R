@@ -78,6 +78,15 @@ png(file.path(datadir, 'figures/conslands_by_source.png'), units = 'in',
 fig
 dev.off()
 
+
+
+
+#################################
+## cons land by type
+#################################
+dat2 <- dat %>%
+  filter(conscat %in% c('Private', 'Public'))
+
 clr2 <- c('#7570b3', '#1b9e77')
 
 ## plot data cons lands by source
