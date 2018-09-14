@@ -9,74 +9,19 @@ library(lwgeom)
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
+#define data directory
+datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ##############################################################
-## data import and prepping
+## data import
 ##############################################################
 
-## import lowcountry region boundary
-lc <- st_read("data/lowcountry.shp") %>%
-  st_transform(utm)
-
-## import NCED data for low country region in SC & GA
-private <- st_read("data/nced_lc.shp") %>%
-  filter(owntype == 'PVT', 
-         purpose %in% c('ENV', 'FOR', 'FARM', 'REC')) %>%
-#  filter(gapcat %in% c('1','2')) %>%
-  mutate(type = "Easement") %>%
-  st_transform(crs = utm) %>%
-  dplyr::select(type, state, sitename, esmthldr, gis_acres, gapcat, purpose, geometry) %>%
-  rename(management = esmthldr, 
-         acres = gis_acres, 
-         gap = gapcat)
-
-## import PAD-US data for low country region in SC & GA
-public <- st_read("data/padus_lc.shp") %>%
-  filter(Own_Type %in% c("FED", "STAT"),
-         Category != "Easement") %>%
-  filter(GAP_Sts %in% c('1', '2')) %>%
-  mutate(purpose = 'NA') %>%
-  st_transform(crs = utm) %>%
-  dplyr::select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
-  rename(type = d_Own_Type, 
-         state = State_Nm, 
-         sitename = Unit_Nm, 
-         management = d_Mang_Nam, 
-         acres = GIS_Acres, 
-         gap = GAP_Sts)
-
-## import protected SC-TNC data for SC
-## DO NOT SHARE DATA
-tnc <- st_read("C:/Users/dhardy/Documents/gis/sc_tnc_data/SC_Private_Protection_March2018.shp") #%>%
-  # filter(Own_Type %in% c("FED", "STAT"),
-  #        Category != "Easement") %>%
-  # filter(GAP_Sts %in% c('1', '2')) %>%
-  # mutate(purpose = 'NA') %>%
-  # st_transform(crs = utm) %>%
-  # dplyr::select(d_Own_Type, State_Nm, Unit_Nm, d_Mang_Nam, GIS_Acres, GAP_Sts, purpose, geometry) %>%
-  # rename(type = d_Own_Type, 
-  #        state = State_Nm, 
-  #        sitename = Unit_Nm, 
-  #        management = d_Mang_Nam, 
-  #        acres = GIS_Acres, 
-  #        gap = GAP_Sts)
-
-# fed <- st_read("data/padus_lc.shp") %>%
-#   filter(Own_Type == "FED",
-#          Category != "Easement") %>%
-#   filter(GAP_Sts %in% c('1', '2'))
-# 
-# state <- st_read("data/padus_lc.shp") %>%
-#   filter(Own_Type == "STAT",
-#          Category != "Easement") %>%
-#   filter(GAP_Sts %in% c('1', '2'))
-
-cons <- rbind(private, public) %>%
+cons <- st_read(file.path(datadir, 'cons_lands.geojson')) %>%
   rowid_to_column() %>%
   st_transform(crs = alb)
 
 ## import census data
-bg <- st_read("data/bg_data.geojson") %>%
+bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
   st_transform(crs = alb)
 
 # density plot
@@ -111,12 +56,12 @@ percBGinBUF <- int %>%
   mutate(sqkm_bginbuf = as.numeric(st_area(geometry) / 1e6)) %>%
   mutate(perc_bginbuf = (sqkm_bginbuf/sqkm_bg))
 
-## write percBGinBUF data out to use in med HH income estimation
+## write percBGinBUF data out to use in median HH income estimation
 percBGinBUF %>%
   data.frame() %>%
   mutate(GEOID = as.character(GEOID)) %>%
   select(rowid, GEOID, perc_bginbuf) %>%
-  saveRDS('data/percBGinBUF.rds')
+  saveRDS(file.path(datadir, 'percBGinBUF.rds'))
 
 bz_geog <- percBGinBUF %>%
   mutate(tot_pop = total * perc_bginbuf,
@@ -141,24 +86,24 @@ bz_geog <- percBGinBUF %>%
   st_as_sf()
 
 # density plot
-ggplot(bz_geog, aes(x = pother, group = type)) +
-  geom_density(aes(color = type)) +
+ggplot(bz_geog, aes(x = pblack, group = conscat)) +
+  geom_density(aes(color = conscat)) +
   theme_bw()
 
 ## import gmedian estimates for hh income
-emed <- readRDS('data/gmedian.rds') %>%
+emed <- readRDS(file.path(datadir, 'gmedian.rds')) %>%
   rename(rowid = BUFID, emedhhinc = gmedian)
 
 df <- bz_geog %>% 
   merge(emed, by = "rowid") %>%
   st_transform(4326)
 
-st_write(df,'data/bz_data.geojson', driver = 'geojson', delete_layer = TRUE)
+st_write(df,file.path(datadir, 'bz_data.geojson'), driver = 'geojson', delete_layer = TRUE)
 
 df %>%
   st_set_geometry(NULL) %>%
-  filter(state == c('GA', 'SC')) %>%
-  write.csv('data/cons_data.csv', row.names = FALSE)
+  filter(state %in% c('GA', 'SC')) %>%
+  write.csv(file.path(datadir, 'cons_data.csv'), row.names = FALSE)
 
 
 

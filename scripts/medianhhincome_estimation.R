@@ -4,8 +4,11 @@
 ## good explanation for how this works mathematically and upon which the function below is based
 ## https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
 
-rm(list=ls())
+#rm(list=ls())
 #options(warn = -1)
+
+#define data directory
+datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ## define variables 
 YR <- 2016
@@ -19,7 +22,7 @@ options(tigris_use_cache = TRUE)
 library(sf)
 
 ## read in percent BG in buffer zone data
-buf <- readRDS('data/percBGinBUF.rds') %>%
+buf <- readRDS(file.path(datadir, 'percBGinBUF.rds')) %>%
   rename(BUFID = rowid)
 
 ## download hh income distribution tables for block groups & label bins
@@ -108,7 +111,7 @@ ggplot(bg2, aes(x = gmedian)) +
   geom_density() +
   theme_bw()
 
-saveRDS(bg2, file = 'data/gmedian.rds')
+saveRDS(bg2, file.path(datadir, 'gmedian.rds'))
 
 
 ############################################
