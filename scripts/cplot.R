@@ -60,7 +60,7 @@
 ##
 ##  Function Definition:
 ##------------------------
-cplot <- function(mod, focal.preds, focal.nms, use.whole.range = T, focal.quants, cond.preds, cond.nms, cond.fac.ordr, cond.fac.nms, cond.quants=c(0.1,0.5,0.9), plot.title, file.nm, png.res=300, inch=4, add.letters=F) {
+cplot <- function(mod, focal.preds, focal.nms, use.whole.range = T, focal.quants, cond.preds, cond.nms, cond.fac.ordr = NULL, cond.fac.nms, cond.quants=c(0.1,0.5,0.9), plot.title, file.nm, png.res=300, inch=4, add.letters=F) {
 
   stopifnot("glm" %in% class(mod))
   stopifnot(cond.preds %in% attr(mod$terms, "term.labels"))
@@ -89,7 +89,7 @@ cplot <- function(mod, focal.preds, focal.nms, use.whole.range = T, focal.quants
     if(lvl.fac[i]) { 
       if (class(mod$data[,cond.preds[i]]) == "factor") {
         lvl.type[i] <- "fac"
-        if (exists("cond.fac.ordr")) { mod$data[,cond.preds[i]] <- factor(mod$data[,cond.preds[i]], levels = cond.fac.ordr[[i]]) }
+        if (!is.null(cond.fac.ordr)) { mod$data[,cond.preds[i]] <- factor(mod$data[,cond.preds[i]], levels = cond.fac.ordr[[i]]) }
         lvls[[i]] <- levels(mod$data[,cond.preds[i]])      
         } else {
         if (all(unique(mod$data[,cond.preds[i]]) %in% c(0,1))) {

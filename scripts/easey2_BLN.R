@@ -20,6 +20,7 @@ ease <- ease[ease$conscat != "UNK",]
 stopifnot(ease$conscat %in% c("Public", "Private"))
 ease$conscat.bin <- ifelse(ease$conscat == "Private", 0, 1)
 
+ease$state <- factor(ease$state)
 
 ##################################################################
 ##################################################################
@@ -110,9 +111,9 @@ lapply(aov.lst, FUN = p.mat)
 forbid <- rbind(cor.problem,
                 matrix(c("acres.sc", "state",
                          "emedhhinc.sc", "state",
-                         "new.popden.sc", "state",
+                         "new.popden.sc", "state"#,
 ##  As of  13 Sep, the favored model has state*pblack and I(pblack^2) -- but the predictive value according to 5-fold cv shows no advantage.  So, I think perhaps they're pretty correlated.
-                         "pblack", "state"
+##                         "pblack", "state"
                          ), ncol = 2, byrow = T))
 
 
@@ -241,7 +242,23 @@ cplot(mod = fit.lst[[54]],
       
 
 
+#####  This is when allowing pblack and state in same model:
 
+cplot(mod = fit.lst[[73]],
+      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_73_pblackXpopden',
+      focal.preds = c("pblack", "new.popden"),
+      focal.nms = c("Proportion black", "Population density (km^-2)"),
+      use.whole.range = T,
+#      focal.quants = c(0.1, 0.9),
+      cond.preds = "state",
+      cond.nms = "State",
+      cond.fac.nms = c("GA", "SC"),
+#      cond.quants = c(0.1, 0.5, 0.9, 0.99),
+      plot.title = "",
+      inch = 5,
+      png.res = 400)
+      
+      
 
 
 
