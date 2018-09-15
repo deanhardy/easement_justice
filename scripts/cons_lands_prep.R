@@ -121,11 +121,11 @@ hist(padusxtnc$prop_in_tnc)
 
 ## select observations with high overlap & filter original data to delete overlapping observations
 tnc2_del <- filter(padusxtnc, prop_in_tnc >= 0.8)
-padus3 <- tnc2 %>% filter(!(id %in% tnc2_del$id.1))
+tnc3 <- tnc2 %>% filter(!(id %in% tnc2_del$id.1))
 
 
 ## combine filtered data
-dat2 <- rbind(nced, tnc2, padus3)
+dat2 <- rbind(nced, padus2, tnc3)
 
 ## export cons lands data
 dat2 %>% st_transform(crs = 4326) %>%
