@@ -9,7 +9,7 @@ library(tmap)
 utm <- 2150 ## NAD83 17N
 
 #define data directory
-datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('C:/Users/Juncus/Dropbox/r_data/cons_lands')
 
 ## import "lowcountry" regions
 t1 <- st_read(file.path(datadir, "lc_tier1.shp")) %>%
@@ -21,7 +21,8 @@ t3 <- st_read(file.path(datadir, "lc_tier3.shp")) %>%
 
 ## import cons lands data
 dat <- st_read(file.path(datadir, 'cons_lands.geojson')) %>%
-  st_transform(utm)
+  st_transform(utm) %>%
+  filter(acres >= 1)
 
 ## download ancillary data for cartographic use
 ## https://www.census.gov/geo/maps-data/maps/2010ua.html
@@ -85,17 +86,19 @@ dev.off()
 ## cons land by type
 #################################
 dat2 <- dat %>%
-  filter(conscat %in% c('Private', 'Public'))
+  # filter(source == 'padus') %>%
+  filter(conscat %in% c('Private', 'Public')) %>%
+  mutate(conscat = as.character(conscat))
 
 clr2 <- c('#7570b3', '#1b9e77')
 
 ## plot data cons lands by source
 fig <- 
-  tm_shape(dat) + tm_borders(col = NULL) +
+  tm_shape(dat2) + tm_borders(col = NULL) +
   tm_shape(st) + tm_fill(col = 'white') +
   tm_shape(t3) + tm_polygons(border.col = 'grey65', col = 'grey95') +
   # tm_shape(t2) + tm_borders(col = 'grey65') +
-  tm_shape(dat) +
+  tm_shape(dat2) +
   tm_fill(col = 'conscat', alpha = 1, palette = clr2,
           legend.show = FALSE) +
   tm_shape(st) + tm_borders(col = 'black') + 
