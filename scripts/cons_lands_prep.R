@@ -12,6 +12,7 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 datadir <- file.path('C:/Users/Juncus/Dropbox/r_data/cons_lands')
 
 ## import protected SC-TNC for SC coastal plain region (tier 3)
+## assuming NAs and unknowns are PRIVATE (need to revise later)
 ## DO NOT SHARE DATA
 tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
   st_transform(crs = utm) %>%
@@ -41,9 +42,10 @@ tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
                                  ifelse(access %in% c('Restricted', 'Limited', 'Limited Access'), 'RA',
                                         ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', access))))) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
-                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', 'UNK')))
+                          ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA)))
 
 ## import NCED data for coastal plain (lc tier 3) region in SC & GA
+## assuming all unknowns are PUBLIC (need to manually edit later)
 nced <- st_read(file.path(datadir, "nced.shp")) %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'nced', acres = as.numeric(st_area(geometry) * 0.00024710538)) %>%
@@ -54,10 +56,11 @@ nced <- st_read(file.path(datadir, "nced.shp")) %>%
         access = pubaccess,
         orig_id = ORIG_FID,
         mgmttype = eholdtype)%>%
-  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
-                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', 'UNK')))
+  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
+                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
 ## import PAD-US data
+## assuming unknowns are PUBLIC
 padus <- st_read(file.path(datadir, "padus.shp")) %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'padus', acres = as.numeric(st_area(geometry) * 0.00024710538), 
@@ -72,8 +75,8 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
          gap = GAP_Sts,
          access = Access,
          orig_id = ORIG_FID) %>%
-  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
-                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', 'UNK')))
+  mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
+                          ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
 dat <- rbind(nced, padus, tnc)
 
@@ -129,7 +132,7 @@ dat2 <- rbind(nced, padus2, tnc3)
 
 ## export cons lands data
 dat2 %>% st_transform(crs = 4326) %>%
-st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson')
+st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 
 

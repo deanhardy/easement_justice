@@ -87,7 +87,7 @@ dev.off()
 #################################
 dat2 <- dat %>%
   # filter(source == 'padus') %>%
-  filter(conscat %in% c('Private', 'Public')) %>%
+  # filter(conscat %in% c('Private', 'Public')) %>%
   mutate(conscat = as.character(conscat))
 
 clr2 <- c('#7570b3', '#1b9e77')
@@ -123,7 +123,7 @@ fig <-
             asp=3.2/2)
 # fig
 
-png(file.path(datadir, 'figures/conslands_by_type.png'), units = 'in',
+png(file.path(datadir, 'figures/conslands_by_conscat.png'), units = 'in',
     height = 7.5, width = 13.33, res = 150)
 fig
 dev.off()
