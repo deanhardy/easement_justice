@@ -8,6 +8,9 @@ library(tmap)
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
+#define data directory
+datadir <- file.path('C:/Users/Juncus/Dropbox/r_data/cons_lands')
+
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## DO NOT SHARE DATA
 tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
@@ -118,15 +121,15 @@ hist(padusxtnc$prop_in_tnc)
 
 ## select observations with high overlap & filter original data to delete overlapping observations
 tnc2_del <- filter(padusxtnc, prop_in_tnc >= 0.8)
-padus3 <- padus2 %>% filter(!(id %in% tnc2_del$id.1))
+padus3 <- tnc2 %>% filter(!(id %in% tnc2_del$id.1))
 
 
 ## combine filtered data
 dat2 <- rbind(nced, tnc2, padus3)
 
 ## export cons lands data
-# dat2 %>% st_transform(crs = 4326) %>%
-# st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson')
+dat2 %>% st_transform(crs = 4326) %>%
+st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson')
 
 
 
