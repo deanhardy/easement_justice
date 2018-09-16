@@ -80,7 +80,10 @@ cplot.intxn <- function(mod, intxns, intxn.nms, sub = NULL, plot.title, file.nm 
   trms <- attributes(terms(mod))$term.labels
   if (intxns == "all") {
     intxns <- intxn.nms <- sort(grep(trms, pattern = ":", fixed = T, value = T))
-  }
+#    if (is.null(intxn.nms)) {
+#      intxn.nms <- intxns    
+#    }
+  }  
   
   pair.lst <- strsplit(intxns, split = ":")
   nms.lst <- strsplit(intxn.nms, split = ":")
@@ -105,9 +108,11 @@ cr(seq(0,1,by = 0.01))/255 -> ramp
 cols <- rgb(ramp[,1], ramp[,2], ramp[,3])
 ################################################
 
-row.col <- c(ceiling(length(clss.lst)/2), 2)     
+#row.col <- c(ceiling(length(clss.lst)/2), 2)   #### I'm not sure why I put a "2" here, originally....
+row.col <- c(ceiling(length(clss.lst)/2), 1)
+    
 
-     
+
   intrxn.fun <- function(v, v.nms) {
      focal.vars <- mod$model[,match(v, names(mod$model))]
      focal.rng <- lapply(focal.vars, FUN = range)
@@ -133,9 +138,12 @@ row.col <- c(ceiling(length(clss.lst)/2), 2)
       mn[i] <- mean(mod$model[,other.main[i]])
       names(mn)[i] <- other.main[i] 
     }
+    pred.df <- as.data.frame(cbind(focal.vals, as.data.frame(matrix(mn, nrow = 1, byrow = T))))
+  } else {
+  pred.df <- as.data.frame(focal.vals)
   }
   
-  pred.df <- as.data.frame(cbind(focal.vals, as.data.frame(matrix(mn, nrow = 1, byrow = T))))
+#  pred.df <- as.data.frame(cbind(focal.vals, as.data.frame(matrix(mn, nrow = 1, byrow = T))))
   names(pred.df) <- c(v, other.main)
 
   pred.vals <- round(predict(mod, newdata=pred.df, type="response"),6)
@@ -153,6 +161,7 @@ row.col <- c(ceiling(length(clss.lst)/2), 2)
   if (!is.null(sub)) {
     for (i in 1:length(sub)) {
       v.nms <- gsub(v.nms, pattern = sub[[i]][1], replace = sub[[i]][2], fixed = T)
+      v.nms <- gsub(v.nms, pattern = " ", replace = "~", fixed = T)
     }
   }
     

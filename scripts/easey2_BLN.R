@@ -13,14 +13,18 @@ ease <- read.csv(file='./data/cons_data.csv', stringsAsFactors = F)
 ease$emedhhinc.sc <- ease$emedhhinc/1e4
 ease$new.popden <- with(ease, tot_pop/sqkm_buf)
 #ease$new.popden.sc <- scale(ease$new.popden)
-ease$acres.sc <- ease$acres/1e4 #scale(ease$acres)
+ease$area_km2 <- ease$acres*0.00404686
 
-ease <- ease[ease$conscat != "UNK",]
+###  For now, filter to Low Country: ecoreg = 1. (2 includes Okefenokee; 3 is whole coastal plain)
+###  based on talking w/ Dean and Levi, 14 Sep 2018.
+###  and, 15 sep, Dean says filter rows whose area is <= 5 acres -- or maybe <= 1 ac, but I like the former, I think.
+ease <- ease[ease$conscat != "UNK" & ease$ecorg_tier == 1 & ease$acres <= 5,]
 
 stopifnot(ease$conscat %in% c("Public", "Private"))
 ease$conscat.bin <- ifelse(ease$conscat == "Private", 0, 1)
 
 ease$state <- factor(ease$state)
+
 
 ##################################################################
 ##################################################################
@@ -40,7 +44,7 @@ ease$state <- factor(ease$state)
 
 resp <- "conscat.bin"
 
-preds <- c("acres.sc", "emedhhinc.sc", "state", "new.popden", "pblack")
+preds <- c("area_km2", "emedhhinc.sc", "state", "new.popden", "pblack", "propPOC")
 #intxn.mat <- matrix(preds[combn(x = length(preds), m = 2)], nrow = 2)
 #intxns <- apply(intxn.mat, MAR = 2, FUN = paste, collapse = ":")
 
@@ -58,14 +62,15 @@ pred.cat <- pred.df[,pred.cat.nms]
 
 ###  Look for correlations in predictors:
 round(pred.cor <- cor(pred.num,), 2)
-#              acres.sc emedhhinc.sc new.popden.sc pblack
-#acres.sc          1.00         0.00         -0.03  -0.01
-#emedhhinc.sc      0.00         1.00          0.32  -0.60
-#new.popden.sc    -0.03         0.32          1.00  -0.10
-#pblack           -0.01        -0.60         -0.10   1.00
+#             area_km2 emedhhinc.sc new.popden pblack propPOC
+#area_km2         1.00        -0.05       0.00   0.08    0.09
+#emedhhinc.sc    -0.05         1.00       0.04  -0.67   -0.63
+#new.popden       0.00         0.04       1.00   0.03    0.13
+#pblack           0.08        -0.67       0.03   1.00    0.95
+#propPOC          0.09        -0.63       0.13   0.95    1.00
 
 
-cor.thresh <- 0.595
+cor.thresh <- 0.6
 
 cor.tri <- lower.tri(pred.cor)
 
@@ -80,22 +85,25 @@ tab.lst <- lapply(pred.num, FUN = tapply, INDEX = pred.cat, mean)   ###
 lapply(tab.lst, FUN = round, 2)
 
 ###  Only one categorical predictor, at the moment.
-#$acres.sc
-#   GA    SC 
-# 0.03 -0.02 
+#$area_km2
+#  GA   SC 
+#0.01 0.01 
 
 #$emedhhinc.sc
 #  GA   SC 
-#4.23 4.45 
+#4.95 5.32 
 
-#$new.popden.sc
-#   GA    SC 
-# 0.04 -0.02 
+#$new.popden
+#    GA     SC 
+#160.26 135.31 
 
 #$pblack
 #  GA   SC 
-#0.36 0.35 
+#0.34 0.27 
 
+#$propPOC
+#  GA   SC 
+#0.46 0.35 
 
 ###  Do ANOVAs to see if state should be forbidden with any of the above: income looks suspect, in particular...
 
@@ -104,17 +112,13 @@ aov.lst <- sapply(pred.cat.nms, FUN = one.way, dat = pred.df, num.preds = pred.n
 lapply(aov.lst, FUN = p.mat)
 ####  following are p-values for one-way anovas:
 #$state
-#     acres.sc  emedhhinc.sc new.popden.sc        pblack 
-#         0.03          0.00          0.01          0.12 
+#    area_km2 emedhhinc.sc   new.popden       pblack      propPOC 
+#        0.88         0.00         0.00         0.00         0.00 
+
 
 ###  So, looks like we don't want state mixed with [popden] or [pblack].
 forbid <- rbind(cor.problem,
-                matrix(c("acres.sc", "state",
-                         "emedhhinc.sc", "state",
-                         "new.popden.sc", "state"#,
-##  As of  13 Sep, the favored model has state*pblack and I(pblack^2) -- but the predictive value according to 5-fold cv shows no advantage.  So, I think perhaps they're pretty correlated.
-##                         "pblack", "state"
-                         ), ncol = 2, byrow = T))
+                cbind("state",c("emedhhinc.sc", "new.popden", "pblack", "propPOC")))
 
 
 max.terms <- 5
@@ -193,72 +197,143 @@ aic.tab.frm <- format(as.data.frame(lapply(aic.tab, FUN = function (v) { if (is.
 # [1] "Private" "Public" 
 ###  so the prediction is "probability that the conservation land is public".
 
+
+#####  OK, 15 sep 2018: this is having filtered all reserves <= 5 acres, and using the dataset sent today by Dean:
+
+
+#Confidence set, and friends:
+#                                                                                         mod mod.num     AIC AIC.wt cv.5_fold
+#1  new.popden + propPOC + I(new.popden^2) + I(propPOC^2) + new.popden:propPOC                     42 2236.76   0.94      0.67
+#2  new.popden + pblack + I(new.popden^2) + I(pblack^2) + new.popden:pblack                        38 2242.43   0.06      0.66
+
+summary(fit.lst[[42]])
+#Deviance Residuals: 
+#    Min       1Q   Median       3Q      Max  
+#-2.4606  -1.2294   0.6821   0.9871   1.1866  
+
+#Coefficients:
+#                     Estimate Std. Error z value Pr(>|z|)    
+#(Intercept)         2.822e+00  4.828e-01   5.845 5.06e-09 ***
+#new.popden         -6.156e-05  2.943e-03  -0.021  0.98331    
+#propPOC            -1.173e+01  2.305e+00  -5.089 3.60e-07 ***
+#I(new.popden^2)     2.504e-05  4.599e-06   5.444 5.21e-08 ***
+#I(propPOC^2)        1.404e+01  2.841e+00   4.940 7.79e-07 ***
+#new.popden:propPOC -1.382e-02  4.709e-03  -2.934  0.00334 ** 
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+#(Dispersion parameter for binomial family taken to be 1)
+
+#    Null deviance: 2369.1  on 1841  degrees of freedom
+#Residual deviance: 2224.8  on 1836  degrees of freedom
+#AIC: 2236.8
+
+#Number of Fisher Scoring iterations: 4
+
+
+#source('./scripts/cplot.R')
+
+
+#cplot(mod = fit.lst[[42]],
+#      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_38_acresXpblack',
+##      intxns = "all",
+##      sub = NULL,
+#      focal.preds = c("pblack", "new.popden"),
+#      focal.nms = c("Proportion black", "Population density (people km^-2)"),
+#      use.whole.range = T,
+##      focal.quants = c(0.1, 0.99),
+#      cond.preds = NULL,
+#      cond.nms = "Population density (km^-2)",
+#      cond.fac.nms = paste0(c("1", "5", "9"), "0th percentile"),
+#      plot.title = "",
+#      inch = 5,
+#      png.res = 400)
+
+
+source('./scripts/cplot_intrxn.R')
+
+cplot.intxn(mod = fit.lst[[42]],
+            intxns = "all",
+#            intxn.nms = "Population density (people km^-2):Proportion people of color",
+            sub = list(c("new.popden", "Population~density~(people~km^-2)"), c("propPOC", "Proportion~people~of~color")),
+            plot.title = "",
+            file.nm = '/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_42_propPOC_x_popden',
+            inch = 6)
+
+
+###################################################################
+###################################################################
+###################################################################
+
+
+
+
 ## allowing pblack and state:
 #summary(fit.lst[[28]])
 
-## disallowing pblack and state:
-summary(fit.lst[[54]])
+### disallowing pblack and state:
+#summary(fit.lst[[54]])
 
-## fit with unscaled preds:
-valid.forms[54]
-#[1] "conscat.bin ~ acres.sc + new.popden.sc + pblack + I(acres.sc^2) + new.popden.sc:pblack"
-
-
-source('./scripts/cplot.R')
-#source('./scripts/cplot_intrxn.R')
-
-cplot(mod = fit.lst[[54]],
-      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_54_acresXpblack',
-#      intxns = "all",
-#      sub = NULL,
-      focal.preds = c("pblack", "acres.sc"),
-      focal.nms = c("Proportion black", "Reserve size (10k acres)"),
-      use.whole.range = F,
-      focal.quants = c(0.1, 0.99),
-      cond.preds = "new.popden",
-      cond.nms = "Population density (km^-2)",
-      cond.fac.nms = paste0(c("1", "5", "9"), "0th percentile"),
-      plot.title = "",
-      inch = 5,
-      png.res = 400)
-      
-      
-
-cplot(mod = fit.lst[[54]],
-      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_54_pblackXpopden',
-      focal.preds = c("pblack", "new.popden"),
-      focal.nms = c("Proportion black", "Population density (km^-2)"),
-      use.whole.range = T,
-#      focal.quants = c(0.1, 0.9),
-      cond.preds = "acres.sc",
-      cond.nms = "Reserve size (10k acres)",
-      cond.fac.nms = paste0(c("10", "50", "90", "99"), "th percentile"),
-#      cond.fac.nms = NULL,
-      cond.quants = c(0.1, 0.5, 0.9, 0.99),
-      plot.title = "",
-      inch = 5,
-      png.res = 400)
-      
-      
+### fit with unscaled preds:
+#valid.forms[54]
+##[1] "conscat.bin ~ acres.sc + new.popden.sc + pblack + I(acres.sc^2) + new.popden.sc:pblack"
 
 
-#####  This is when allowing pblack and state in same model:
+#source('./scripts/cplot.R')
+##source('./scripts/cplot_intrxn.R')
 
-cplot(mod = fit.lst[[73]],
-      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_73_pblackXpopden',
-      focal.preds = c("pblack", "new.popden"),
-      focal.nms = c("Proportion black", "Population density (km^-2)"),
-      use.whole.range = T,
-#      focal.quants = c(0.1, 0.9),
-      cond.preds = "state",
-      cond.nms = "State",
-      cond.fac.nms = c("GA", "SC"),
+#cplot(mod = fit.lst[[54]],
+#      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_54_acresXpblack',
+##      intxns = "all",
+##      sub = NULL,
+#      focal.preds = c("pblack", "acres.sc"),
+#      focal.nms = c("Proportion black", "Reserve size (10k acres)"),
+#      use.whole.range = F,
+#      focal.quants = c(0.1, 0.99),
+#      cond.preds = "new.popden",
+#      cond.nms = "Population density (km^-2)",
+#      cond.fac.nms = paste0(c("1", "5", "9"), "0th percentile"),
+#      plot.title = "",
+#      inch = 5,
+#      png.res = 400)
+#      
+#      
+
+#cplot(mod = fit.lst[[54]],
+#      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_54_pblackXpopden',
+#      focal.preds = c("pblack", "new.popden"),
+#      focal.nms = c("Proportion black", "Population density (km^-2)"),
+#      use.whole.range = T,
+##      focal.quants = c(0.1, 0.9),
+#      cond.preds = "acres.sc",
+#      cond.nms = "Reserve size (10k acres)",
+#      cond.fac.nms = paste0(c("10", "50", "90", "99"), "th percentile"),
+##      cond.fac.nms = NULL,
 #      cond.quants = c(0.1, 0.5, 0.9, 0.99),
-      plot.title = "",
-      inch = 5,
-      png.res = 400)
-      
-      
+#      plot.title = "",
+#      inch = 5,
+#      png.res = 400)
+#      
+#      
+
+
+######  This is when allowing pblack and state in same model:
+
+#cplot(mod = fit.lst[[73]],
+#      file.nm ='/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/mod_73_pblackXpopden',
+#      focal.preds = c("pblack", "new.popden"),
+#      focal.nms = c("Proportion black", "Population density (km^-2)"),
+#      use.whole.range = T,
+##      focal.quants = c(0.1, 0.9),
+#      cond.preds = "state",
+#      cond.nms = "State",
+#      cond.fac.nms = c("GA", "SC"),
+##      cond.quants = c(0.1, 0.5, 0.9, 0.99),
+#      plot.title = "",
+#      inch = 5,
+#      png.res = 400)
+#      
+#      
 
 
 
