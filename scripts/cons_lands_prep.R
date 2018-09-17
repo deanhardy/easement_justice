@@ -9,7 +9,7 @@ utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 #define data directory
-datadir <- file.path('C:/Users/Juncus/Dropbox/r_data/cons_lands')
+datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## assuming NAs and unknowns are PRIVATE (need to revise later)
@@ -79,6 +79,15 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
 dat <- rbind(nced, padus, tnc)
+
+dat_bx <- dat %>%
+  filter(acres > 5 & ecorg_tier == 1)
+
+png('figs/conscat_acres_boxplot.png', res = 150, units = 'in',
+    height = 5, width = 5)
+boxplot(acres ~ conscat, data = dat_bx, outline = F,
+        ylab = 'Acres', xlab = 'Conservation Category')
+dev.off()
 
 ## exploring the data
 table(dat$source, dat$conscat)
