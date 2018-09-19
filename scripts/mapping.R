@@ -13,11 +13,14 @@ datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ## import "lowcountry" regions
 t1 <- st_read(file.path(datadir, "lc_tier1.shp")) %>%
-  st_transform(utm)
+  st_transform(utm) %>%
+  mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
 t2 <- st_read(file.path(datadir, "lc_tier2.shp")) %>%
-  st_transform(utm)
+  st_transform(utm)%>%
+  mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
 t3 <- st_read(file.path(datadir, "lc_tier3.shp")) %>%
-  st_transform(utm)
+  st_transform(utm)%>%
+  mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
 
 ## import cons lands data
 dat <- st_read(file.path(datadir, 'cons_lands.geojson')) %>%
@@ -215,12 +218,24 @@ dev.off()
 png('figs/conscat_acres_boxplot.png', res = 150, units = 'in',
     height = 5, width = 5)
 boxplot(acres ~ conscat, data = dat2, outline = F,
-        ylab = 'Acres', xlab = 'Conservation Category')
+        ylab = 'Acres', xlab = '')
 mtext('*no outliers', side = 1, line = 4, adj = 1)
 dev.off()
 
 ## 
 table(dat$ecorg_tier, dat$conscat)
+
+## percent of coastal plain in conservation
+100 * ((sum(dat3$acres_sum) * 10000) / t3$acres)
+
+## percent of lowcountry in conservation
+100 * (((dat3[[3,3]] + dat3[[4,3]]) * 10000) / t1$acres)
+
+## percent of coastal plain in private conservation
+100 * (((dat3[[1,3]] + dat3[[3,3]]) * 10000) / t3$acres)
+
+## percent of lowcountry in private conservation
+100 * (((dat3[[3,3]]) * 10000) / t1$acres)
 
 ##
 dat3 <- dat %>%
@@ -229,6 +244,10 @@ dat3 <- dat %>%
   mutate(label = ifelse(ecorg_tier == 1, 'Lowcountry', 'Coastal Plain')) %>%
   group_by(label, conscat) %>%
   summarise(acres_sum = sum(acres/10000))
+
+filter(dat3, conscat == 'Private' & label == 'Lowcountry') %>%
+  print(acres_sum/tier1$acres)
+
 ggplot(dat3) +
   geom_col(aes(label, acres_sum, fill = conscat), position = 'dodge') + 
   scale_discrete_manual(name = 'Conservation Category', fill = clr2)
