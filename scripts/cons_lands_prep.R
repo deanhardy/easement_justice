@@ -80,16 +80,6 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
 
 dat <- rbind(nced, padus, tnc)
 
-dat_bx <- dat %>%
-  filter(acres > 5 & ecorg_tier == 1)
-
-png('figs/conscat_acres_boxplot.png', res = 150, units = 'in',
-    height = 5, width = 5)
-boxplot(acres ~ conscat, data = dat_bx, outline = F,
-        ylab = 'Acres', xlab = 'Conservation Category')
-mtext('*no outliers', side = 1, line = 4, adj = 1)
-dev.off()
-
 ## exploring the data
 table(dat$source, dat$conscat)
 
