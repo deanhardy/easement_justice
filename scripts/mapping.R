@@ -304,7 +304,7 @@ ggplot(dat3) +
 ## import buffer zone demographic data
 bzdat <- st_read(file.path(datadir, 'bz_data.geojson')) %>%
   st_transform(utm) %>%
-  mutate(conscat = as.character(conscat)) %>%
+  mutate(conscat = as.character(conscat), popden = tot_pop/sqkm_buf) %>%
   filter(ecorg_tier == 1 & acres > 5)
 
 ## boxplot of private vs public cons POC
@@ -320,5 +320,13 @@ png('figs/conscat_emedhhinc_boxplot.png', res = 150, units = 'in',
     height = 5, width = 5)
 boxplot(emedhhinc ~ conscat, data = bzdat, outline = F,
         ylab = 'Estimated Median Household Income', xlab = '')
+# mtext('*no outliers', side = 1, line = 4, adj = 1)
+dev.off()
+
+## boxplot of private vs public cons emedhhinc
+png('figs/conscat_popden_boxplot.png', res = 150, units = 'in',
+    height = 5, width = 5)
+boxplot(popden ~ conscat, data = bzdat, outline = F,
+        ylab = 'Population Density (KM^2)', xlab = '')
 # mtext('*no outliers', side = 1, line = 4, adj = 1)
 dev.off()
