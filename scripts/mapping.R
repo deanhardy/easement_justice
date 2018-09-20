@@ -7,6 +7,8 @@ library(sf)
 library(tmap)
 
 utm <- 2150 ## NAD83 17N
+clr <- c('#fc8d59', '#ffffbf', '#91bfdb')
+clr2 <- c('#7570b3', '#1b9e77')
 
 #define data directory
 datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
@@ -33,6 +35,7 @@ dat <- st_read(file.path(datadir, 'cons_lands.geojson')) %>%
 st <- states(cb = FALSE, resolution = '500k', year = NULL) %>%
   st_as_sf() %>%
   filter(NAME %in% c('Georgia', 'South Carolina', 'North Carolina', 'Alabama', 'Florida'))
+
 urb <- urban_areas(cb = TRUE, year = 2016) %>%
   st_as_sf() %>%
   filter(NAME10 %in% c('Athens-Clarke County, GA', 'Savannah, GA', 'Brunswick, GA', 
@@ -45,7 +48,6 @@ urb <- urban_areas(cb = TRUE, year = 2016) %>%
                                             ifelse(NAME10 == 'Myrtle Beach--Socastee, SC--NC', 'Myrtle Beach',
                                                    ifelse(NAME10 == 'Hilton Head Island, SC', 'Hilton Head', NA)))))))
   
-clr <- c('#fc8d59', '#ffffbf', '#91bfdb')
 
 
 ## map of low country region
@@ -125,8 +127,6 @@ dev.off()
 #################################
 ## cons land by type
 #################################
-
-clr2 <- c('#7570b3', '#1b9e77')
 
 ## plot data cons lands by source
 fig <- 
@@ -211,6 +211,54 @@ dev.off()
 
 
 
+## import buffers
+buf <- st_read(file.path(datadir, 'buf_zones.geojson')) %>%
+  st_transform(utm) %>%
+  mutate(conscat = as.character(conscat)) %>%
+  filter(ecorg_tier == 1 & acres > 5 & conscat == 'Private' & state == 'GA') %>%
+  sample_n(., 50, replace = FALSE)
+
+ga <- dat2 %>%
+  filter(state == 'GA' & conscat == 'Private')
+  
+## plot buffers by category for tier 1 only
+fig <- 
+  tm_shape(buf) + tm_borders(col = NULL) + 
+  tm_shape(st) + tm_fill(col = 'white') +
+  tm_shape(t3) + tm_polygons(border.col = 'grey65', col = 'grey95') +
+  tm_shape(ga) +
+  tm_fill(col = '#7570b3', alpha = 1,
+          legend.show = FALSE) +
+  tm_shape(st) + tm_borders(col = 'black') + 
+  tm_shape(t1) + tm_borders(col = 'black', lwd = 2) +
+  tm_shape(buf) + tm_borders(col = 'black') +
+  tm_shape(urb) + tm_dots(col = 'black', size = 0.3, shape = 15, legend.show = FALSE) + 
+  tm_text(text = 'name', just = 'left', xmod = 0.3, ymod = -0.3, shadow = TRUE) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.7,0.08)) +
+  tm_scale_bar(breaks = c(0,40, 80), size = 1, position= c(0.6, 0.0)) +
+  tm_add_legend(type = c('fill'), labels = 'Private', 
+                col = '#7570b3', 
+                title = "Category") +
+  tm_legend(position = c(0.9, 0.04),
+            bg.color = 'white',
+            frame = TRUE,
+            legend.text.size = 1.2,
+            legend.title.size = 1.4) + 
+  tm_layout(frame = TRUE, 
+            bg.color = 'skyblue',
+            outer.bg.color = 'black',
+            outer.margins=c(0,0,0,0),
+            # inner.margins=c(0,0,0,0), 
+            asp=3.2/2)
+# fig
+
+png(file.path(datadir, 'figures/buffers_by_conscat_tier1.png'), units = 'in',
+    height = 7.5, width = 13.33, res = 150)
+fig
+dev.off()
+
+
+
 ####################
 ## making plots
 ####################
@@ -252,4 +300,25 @@ ggplot(dat3) +
   geom_col(aes(label, acres_sum, fill = conscat), position = 'dodge') + 
   scale_discrete_manual(name = 'Conservation Category', fill = clr2)
 
-           
+
+## import buffer zone demographic data
+bzdat <- st_read(file.path(datadir, 'bz_data.geojson')) %>%
+  st_transform(utm) %>%
+  mutate(conscat = as.character(conscat)) %>%
+  filter(ecorg_tier == 1 & acres > 5)
+
+## boxplot of private vs public cons POC
+png('figs/conscat_poc_boxplot.png', res = 150, units = 'in',
+    height = 5, width = 5)
+boxplot(propPOC ~ conscat, data = bzdat, outline = F,
+        ylab = 'People of Color', xlab = '')
+# mtext('*no outliers', side = 1, line = 4, adj = 1)
+dev.off()
+
+## boxplot of private vs public cons emedhhinc
+png('figs/conscat_emedhhinc_boxplot.png', res = 150, units = 'in',
+    height = 5, width = 5)
+boxplot(emedhhinc ~ conscat, data = bzdat, outline = F,
+        ylab = 'Estimated Median Household Income', xlab = '')
+# mtext('*no outliers', side = 1, line = 4, adj = 1)
+dev.off()
