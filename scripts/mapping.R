@@ -273,6 +273,14 @@ dev.off()
 ## 
 table(dat$ecorg_tier, dat$conscat)
 
+##
+dat3 <- dat %>%
+  st_set_geometry(NULL) %>%
+  mutate(ecorg_tier = ifelse(ecorg_tier == 1, 1, 3)) %>%
+  mutate(label = ifelse(ecorg_tier == 1, 'Lowcountry', 'Coastal Plain')) %>%
+  group_by(label, conscat) %>%
+  summarise(acres_sum = sum(acres/10000))
+
 ## percent of coastal plain in conservation
 100 * ((sum(dat3$acres_sum) * 10000) / t3$acres)
 
@@ -285,13 +293,7 @@ table(dat$ecorg_tier, dat$conscat)
 ## percent of lowcountry in private conservation
 100 * (((dat3[[3,3]]) * 10000) / t1$acres)
 
-##
-dat3 <- dat %>%
-  st_set_geometry(NULL) %>%
-  mutate(ecorg_tier = ifelse(ecorg_tier == 1, 1, 3)) %>%
-  mutate(label = ifelse(ecorg_tier == 1, 'Lowcountry', 'Coastal Plain')) %>%
-  group_by(label, conscat) %>%
-  summarise(acres_sum = sum(acres/10000))
+
 
 filter(dat3, conscat == 'Private' & label == 'Lowcountry') %>%
   print(acres_sum/tier1$acres)
@@ -323,7 +325,7 @@ boxplot(emedhhinc ~ conscat, data = bzdat, outline = F,
 # mtext('*no outliers', side = 1, line = 4, adj = 1)
 dev.off()
 
-## boxplot of private vs public cons emedhhinc
+## boxplot of private vs public cons population density
 png('figs/conscat_popden_boxplot.png', res = 150, units = 'in',
     height = 5, width = 5)
 boxplot(popden ~ conscat, data = bzdat, outline = F,
