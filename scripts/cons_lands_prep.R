@@ -1,3 +1,10 @@
+################################################
+## PURPOSE: This script wrangles conservation land data from three sources 
+##     (PADUS, NCED, & SC-TNC (proprietary)) into one dataframe
+## BY: Dean Hardy
+##
+################################################
+
 rm(list=ls())
 
 library(tidyverse)
@@ -9,7 +16,7 @@ utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 #define data directory
-datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## assuming NAs and unknowns are PRIVATE (need to revise later)

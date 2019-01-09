@@ -4,10 +4,15 @@ library(leaflet)
 library(leaflet.extras)
 library(sf)
 
-df <- st_read("data/bz_data.geojson")
-bf <- st_read('data/ben_zones.geojson')
+#define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
 
-pal <- colorFactor(rainbow(3), df$type)
+df <- st_read(file.path(datadir, 'bz_data.geojson')) %>%
+  filter(ecorg_tier == 1)
+bf <- st_read(file.path(datadir, 'buf_zones.geojson')) %>%
+  filter(ecorg_tier == 1)
+
+pal <- colorFactor(rainbow(3), df$conscat)
 
 m <- leaflet() %>%
   addTiles(group = "Open Street Map") %>%
@@ -29,21 +34,22 @@ m <- leaflet() %>%
                             "Estimated Median HH Income (US$):", round(df$emedhhinc, 0), "<br>",
                             "Estimated Mean HH Income (US$):", df$mnhhinc, "<br>",
                             "GAP Status:", df$gap, "<br>",
-                            "Purpose:", df$purpose),
+                            "Purpose:", df$purpose, "<br>",
+                            "Data Source:", df$source),
               group = "Conservation Areas",
-              fillColor = ~pal(df$type),
+              fillColor = ~pal(df$conscat),
               fillOpacity = 0.5,
               weight = 1) %>%
   addPolylines(data = bf, 
-               color = ~pal(bf$type),
+               color = ~pal(bf$conscat),
                weight = 1, 
-               group = "Beneficiary Zones") %>%
+               group = "Buffer Zones") %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-      overlayGroups = c("Conservation Areas", "Beneficiary Zones"),
+      overlayGroups = c("Conservation Areas", "Buffer Zones"),
       options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
             pal = pal,
-            values = df$type,
+            values = df$conscat,
             title = "Conservation Area") %>%
   addScaleBar("bottomright")
 m
@@ -51,7 +57,7 @@ m
 ## exporting as html file for exploration
 library(htmlwidgets)
 saveWidget(m, 
-           file="C:/Users/dhardy/Dropbox/sesync/manuscripts/unpublished/easement_justice/R/easement_justice/docs/lowcountry_conservation.html",
+           file="/Users/dhardy/Dropbox/r_data/cons_lands/maps/lowcountry_conservation.html",
            title = "Lowcountry Conservation Areas")
 
 
