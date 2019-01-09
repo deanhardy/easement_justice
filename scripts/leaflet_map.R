@@ -57,7 +57,7 @@ m
 ## exporting as html file for exploration
 library(htmlwidgets)
 saveWidget(m, 
-           file="/Users/dhardy/Dropbox/r_data/cons_lands/maps/lowcountry_conservation.html",
+           file="/Users/dhardy/Dropbox/r_data/cons_lands/lowcountry_conservation.html",
            title = "Lowcountry Conservation Areas")
 
 
