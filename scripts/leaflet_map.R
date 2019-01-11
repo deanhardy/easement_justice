@@ -7,6 +7,15 @@ library(sf)
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
 
+df2 <- st_read(file.path(datadir, 'tncxtnc.geojson'))
+leaflet() %>%
+  addTiles(group = "Open Street Map") %>%
+  addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+  setView(lng = -81, lat = 33, zoom = 7) %>%
+  addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
+  addPolygons(data = df2)
+
 df <- st_read(file.path(datadir, 'bz_data.geojson')) %>%
   filter(ecorg_tier == 1)
 bf <- st_read(file.path(datadir, 'buf_zones.geojson')) %>%

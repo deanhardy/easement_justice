@@ -137,6 +137,19 @@ tnc3 <- tnc2 %>% filter(!(id %in% tnc2_del$id.1))
 ## combine filtered data
 dat2 <- rbind(nced, padus2, tnc3)
 
+dat3 <- st_sym_difference(dat2)
+## examine overlap within data set
+# dat3 <- st_intersection(dat2, dat2) %>%
+#   mutate(acres_nced_dat2 = acres - acres.1,
+#          acres_in_dat2 = as.numeric(st_area(geometry) * 0.00024710538)) %>%
+#   mutate(prop_in_tnc = acres_in_dat2/acres)
+# hist(dat2$prop_in_dat2)
+
+## select observations with high overlap & filter original data to delete overlapping observations
+# t <- filter(ncedxtnc, prop_in_tnc >=0.9 & abs(acres_nced_tnc) < 1)
+# dat2_del <- filter(tncxtnc, prop_in_dat2 >= 0.9)
+# tnc2 <- tnc %>% filter(!(id %in% tnc_del$id.1))
+
 ## export cons lands data
 dat2 %>% st_transform(crs = 4326) %>%
 st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson', delete_dsn = TRUE)
