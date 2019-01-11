@@ -2,14 +2,15 @@
 ## PURPOSE: This script wrangles conservation land data from three sources 
 ##     (PADUS, NCED, & SC-TNC (proprietary)) into one dataframe
 ## BY: Dean Hardy
-##
 ################################################
 
 rm(list=ls())
 
 library(tidyverse)
+library(lwgeom)
 library(sf)
-library(tmap)
+library(fasterize)
+library(raster)
 
 ## define variables
 utm <- 2150 ## NAD83 17N
@@ -51,6 +52,11 @@ tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
                           ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA)))
 
+## convert to raster then back to polygon
+# r <- raster(tnc, res = 10)
+# tnc_r <- fasterize(tnc, r, field = 'id')
+# tnc_p <- rasterToPolygons(tnc_r)
+
 ## import NCED data for coastal plain (lc tier 3) region in SC & GA
 ## assuming all unknowns are PUBLIC (need to manually edit later)
 nced <- st_read(file.path(datadir, "nced.shp")) %>%
@@ -85,7 +91,14 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
-dat <- rbind(nced, padus, tnc)
+# tnc_inter <- tnc %>%
+#   st_make_valid() %>%
+#   filter(ecorg_tier ==1) %>%
+#   st_set_precision(1e2) %>%
+#   st_buffer(100) %>%
+#   st_intersection()
+
+dat <- rbind(nced, padus, tnc) 
 
 ## exploring the data
 table(dat$source, dat$conscat)
@@ -133,11 +146,30 @@ hist(padusxtnc$prop_in_tnc)
 tnc2_del <- filter(padusxtnc, prop_in_tnc >= 0.8)
 tnc3 <- tnc2 %>% filter(!(id %in% tnc2_del$id.1))
 
-
 ## combine filtered data
 dat2 <- rbind(nced, padus2, tnc3)
 
-dat3 <- st_sym_difference(dat2)
+# dat2_prv <- dat2 %>%
+#   filter(ecorg_tier ==1 & conscat == 'Private') %>%
+#   st_snap(., dat2, 50)
+
+## Tidying feature geomotries with sf
+## https://www.r-spatial.org/r/2017/03/19/invalid.html
+
+## repair geometry and check validity
+dat2_v <- st_make_valid(dat2)
+valid = st_is_valid(dat2_v)
+table(valid)["FALSE"]
+
+## keep receiving error, see sf issue 860 here: https://github.com/r-spatial/sf/issues/860
+dat3 <- dat2_f %>%
+  filter(ecorg_tier == 1) %>%
+  st_cast('POLYGON') %>%
+  st_set_precision(1e2) %>%
+  st_buffer(100) %>%
+  st_cast() %>%
+  st_intersection()
+
 ## examine overlap within data set
 # dat3 <- st_intersection(dat2, dat2) %>%
 #   mutate(acres_nced_dat2 = acres - acres.1,
@@ -151,11 +183,13 @@ dat3 <- st_sym_difference(dat2)
 # tnc2 <- tnc %>% filter(!(id %in% tnc_del$id.1))
 
 ## export cons lands data
+# dat2 %>% st_transform(crs = 4326) %>%
+#   filter(ecorg_tier == 1) %>%
+#   st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile', delete_dsn = TRUE)
+
+## export cons lands data
 dat2 %>% st_transform(crs = 4326) %>%
-st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson', delete_dsn = TRUE)
-
-
-
+  st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 ## filtering the data sets
 # tnc2 <- filter(tnc, conscat == 'Private')
