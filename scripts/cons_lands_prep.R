@@ -157,9 +157,30 @@ dat2 <- rbind(nced, padus2, tnc3)
 ## https://www.r-spatial.org/r/2017/03/19/invalid.html
 
 ## repair geometry and check validity
-dat2_v <- st_make_valid(dat2)
-valid = st_is_valid(dat2_v)
+valid = st_is_valid(dat2)
 table(valid)["FALSE"]
+dat2_v <- st_make_valid(dat2)
+
+ dat2_f <- dat2 %>%
+  filter(valid == 'TRUE')
+
+## filter to lowcountry and union by conscat
+dat3 <- dat2_f %>% 
+  filter(ecorg_tier ==1) %>%
+  split(.$conscat) %>% 
+  lapply(st_union) %>% 
+  do.call(c, .) %>% # bind the list element to a single sfc
+  st_cast("MULTIPOLYGON") # mapview doesn't like GEOMETRY -> cast to MULTIPOLYGON
+mapview(dat3)
+
+dat4 <- dat2_f %>%
+  group_by(conscat) %>%
+  summarize()
+
+## euclidean distance buffering
+buf <- dat4 %>%
+  st_buffer(dist = 16000) %>%
+  mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
 
 ## keep receiving error, see sf issue 860 here: https://github.com/r-spatial/sf/issues/860
 dat3 <- dat2_f %>%
@@ -169,6 +190,8 @@ dat3 <- dat2_f %>%
   st_buffer(100) %>%
   st_cast() %>%
   st_intersection()
+
+test <- st_intersection(tnc)
 
 ## examine overlap within data set
 # dat3 <- st_intersection(dat2, dat2) %>%
@@ -183,9 +206,9 @@ dat3 <- dat2_f %>%
 # tnc2 <- tnc %>% filter(!(id %in% tnc_del$id.1))
 
 ## export cons lands data
-# dat2 %>% st_transform(crs = 4326) %>%
-#   filter(ecorg_tier == 1) %>%
-#   st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile', delete_dsn = TRUE)
+dat2 %>% st_transform(crs = 4326) %>%
+  filter(ecorg_tier == 1) %>%
+  st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile', delete_dsn = TRUE)
 
 ## export cons lands data
 dat2 %>% st_transform(crs = 4326) %>%
