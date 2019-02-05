@@ -100,11 +100,22 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
 
 dat <- rbind(nced, padus, tnc) 
 
+dat %>% filter(ecorg_tier == 1) %>%
+  st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
+
 ## exploring the data
 table(dat$source, dat$conscat)
 
+# library(tmap)
+# qtm(dat, fill = 'conscat')
 
-# st_write(dat, file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
+test <- dat %>%
+  filter(conscat == 'Private') %>%
+  st_combine() %>%
+  st_cast("POLYGON")
+
+st_write(test, file.path(datadir, 'test.shp'), driver = 'ESRI Shapefile')
+
 # st_write(dat, file.path(datadir, 'tnc_rc.shp'), driver = 'ESRI Shapefile')
 # st_write(dat, file.path(datadir, 'nced_rc.shp'), driver = 'ESRI Shapefile')
 # st_write(dat, file.path(datadir, 'padus_rc.shp'), driver = 'ESRI Shapefile')
