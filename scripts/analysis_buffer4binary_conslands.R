@@ -6,17 +6,19 @@
 rm(list=ls())
 
 library(tidyverse)
-library(lwgeom)
 library(sf)
 
-#######################################################################
-## union & buffer reserves in prep for public vs private analysis
-#######################################################################
-
+## define variables
 DIST = 16000 ## distance (m) of buffer zones
 PERC = c(0.005, 0.01, 0.05) ## percent of buffer zone for unioning reserves
 pub_buf <- NULL
 pvt_buf <- NULL
+
+#define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
+
+## read in data
+dat <- st_read(file.path(datadir, 'cons_lands.shp'))
 
 ## filter to lowcountry and public or private
 pub <- dat %>%
