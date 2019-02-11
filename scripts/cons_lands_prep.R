@@ -9,8 +9,9 @@ rm(list=ls())
 library(tidyverse)
 library(lwgeom)
 library(sf)
-library(fasterize)
-library(raster)
+library(tmap)
+options("scipen"=100, "digits"=4)
+# options("scipen"=0, "digits"=7) ## default
 
 ## define variables
 utm <- 2150 ## NAD83 17N
@@ -46,9 +47,9 @@ tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
                                                       ifelse(owntype == 'Regional Agency', 'DIST', 
                                                              ifelse(owntype == 'NGO', 'NGO', 'UNK')))))))) %>%
   mutate(access = ifelse(access %in% c('Closed', 'No', 'NO'),'XA', 
-                          ifelse(access %in% c(NA, 363.138382858769), 'UK', 
-                                 ifelse(access %in% c('Restricted', 'Limited', 'Limited Access'), 'RA',
-                                        ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', access))))) %>%
+                         ifelse(access %in% c(NA, 363.138382858769), 'UK', 
+                                ifelse(access %in% c('Restricted', 'Limited', 'Limited Access'), 'RA',
+                                       ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', access))))) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
                           ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA)))
 
@@ -65,10 +66,10 @@ nced <- st_read(file.path(datadir, "nced.shp")) %>%
   dplyr::select(id, owntype, eholdtype, esmthldr, sitename, pubaccess, state, 
                 acres, gapcat, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
   rename(management = esmthldr, 
-        gap = gapcat,
-        access = pubaccess,
-        orig_id = ORIG_FID,
-        mgmttype = eholdtype)%>%
+         gap = gapcat,
+         access = pubaccess,
+         orig_id = ORIG_FID,
+         mgmttype = eholdtype)%>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
@@ -91,37 +92,25 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
-# tnc_inter <- tnc %>%
-#   st_make_valid() %>%
-#   filter(ecorg_tier ==1) %>%
-#   st_set_precision(1e2) %>%
-#   st_buffer(100) %>%
-#   st_intersection()
+## combine tidy source data and make geometry valid
+dat <- rbind(nced, padus, tnc) %>%
+  st_make_valid()
 
-dat <- rbind(nced, padus, tnc) 
-
-dat %>% filter(ecorg_tier == 1) %>%
-  st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
+## export just lowcountry data
+# dat %>% filter(ecorg_tier == 1) %>%
+#   st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
 
 ## exploring the data
 table(dat$source, dat$conscat)
-
-# library(tmap)
 # qtm(dat, fill = 'conscat')
 
-test <- dat %>%
-  filter(conscat == 'Private') %>%
-  st_combine() %>%
-  st_cast("POLYGON")
 
-st_write(test, file.path(datadir, 'test.shp'), driver = 'ESRI Shapefile')
 
-# st_write(dat, file.path(datadir, 'tnc_rc.shp'), driver = 'ESRI Shapefile')
-# st_write(dat, file.path(datadir, 'nced_rc.shp'), driver = 'ESRI Shapefile')
-# st_write(dat, file.path(datadir, 'padus_rc.shp'), driver = 'ESRI Shapefile')
 
-options("scipen"=100, "digits"=4)
-# options("scipen"=0, "digits"=7) ## default
+#######################################################################
+## eliminate overlapping polygons among three source data sets
+## for regression analysis 
+#######################################################################
 
 ## examine intersection of NCED & TNC data sets
 ncedxtnc <- st_intersection(nced, tnc) %>%
@@ -172,7 +161,7 @@ valid = st_is_valid(dat2)
 table(valid)["FALSE"]
 dat2_v <- st_make_valid(dat2)
 
- dat2_f <- dat2 %>%
+dat2_f <- dat2 %>%
   filter(valid == 'TRUE')
 
 ## filter to lowcountry and union by conscat
@@ -238,8 +227,3 @@ dat2 %>% st_transform(crs = 4326) %>%
 #   geom_sf(data = tnc, aes(fill = source), lwd = 0, alpha = 0.3, inherit.aes = TRUE) + 
 #   geom_sf(data = padus, aes(color = NULL, fill = source), lwd = 0, alpha = 0.3, inherit.aes = FALSE) + 
 #   geom_sf(data = nced, aes(fill = source), lwd = 0, alpha = 0.3, inherit.aes = FALSE)
-
-  
-    
-
-
