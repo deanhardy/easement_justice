@@ -7,24 +7,27 @@ library(lwgeom)
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
+BZONE = 16000 ## beneficiary zone buffer distance
+CLBUF = 160 ## cons lands buffer distance
 
 #define data directory
-datadir <- file.path('C:/Users/Juncus/Dropbox/r_data/cons_lands')
+datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ##############################################################
 ## data import
 ##############################################################
 
-cons <- st_read(file.path(datadir, 'cons_lands.geojson')) %>%
+cons <- st_read(file.path(datadir, 'conslands_er1_bufs.shp')) %>%
   rowid_to_column() %>%
-  st_transform(crs = alb)
+  st_transform(crs = alb) %>%
+  filter(buf_m == CLBUF)
 
 ## import census data
 bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
   st_transform(crs = alb)
 
 # density plot
-ggplot(bg, aes(x = hawaiian)) +
+ggplot(bg, aes(x = white)) +
   geom_density() +
   theme_bw()
 
@@ -36,27 +39,27 @@ ggplot(bg, aes(x = hawaiian)) +
 ###################################################
 
 ## euclidean distance buffering
-buf <- cons %>%
-  st_buffer(dist = 16000) %>%
+bz <- cons %>%
+  st_buffer(dist = BZONE) %>%
   mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
 
-st_centroid(buf) %>%
+st_centroid(bz) %>%
   st_transform(4326) %>%
   select(rowid) %>%
-  st_write(file.path(datadir, 'buf_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
+  st_write(file.path(datadir, 'bz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
-buf %>% st_transform(4326) %>%
-  st_write(file.path(datadir, 'buf_zones.geojson'), driver = 'geojson', delete_dsn = TRUE)
+bz %>% st_transform(4326) %>%
+  st_write(file.path(datadir, 'ben_zones.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 ## define intersection between buffer zones and block groups
-int <- as.tibble(st_intersection(buf, bg))
+int <- as.tibble(st_intersection(bz, bg))
 
 ## proportional area adjustment/allocation method
 percBGinBUF <- int %>%
   mutate(sqkm_bginbuf = as.numeric(st_area(geometry) / 1e6)) %>%
   mutate(perc_bginbuf = (sqkm_bginbuf/sqkm_bg))
 
-## save percBGinBUF data to use in median HH income estimation
+## save percBGinBUF data to use in median HH income estimation (see below)
 bg_for_emed <- percBGinBUF %>%
   data.frame() %>%
   mutate(GEOID = as.character(GEOID)) %>%
@@ -86,7 +89,7 @@ bz_geog <- percBGinBUF %>%
   st_as_sf()
 
 # density plot
-ggplot(bz_geog, aes(x = pblack, group = conscat)) +
+ggplot(bz_geog, aes(x = pwhite, group = conscat)) +
   geom_density(aes(color = conscat)) +
   theme_bw()
 
@@ -191,19 +194,20 @@ bg2 <- gm %>%
   summarise(interval = interval[[1]], eHH = sum(eHH), households = sum(households)) %>%
   summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = 'cut'))
 
-# density plot
-ggplot(bg2, aes(x = gmedian)) +
-  geom_density() +
-  theme_bw()
-
- ## import gmedian estimates for hh income
+## import gmedian estimates for hh income
 emed <- bg2 %>%
   rename(rowid = BUFID, emedhhinc = gmedian)
 
 ## merge emedian hh income with other demographic data
 df <- bz_geog %>% 
   merge(emed, by = "rowid") %>%
-  st_transform(4326)
+  st_transform(4326) 
+# filter(state %in% c('GA', 'SC'))
+
+# density plot
+ggplot(df, aes(x = emedhhinc, group = conscat)) +
+  geom_density(aes(color = conscat)) +
+  theme_bw()
 
 ##############################
 ## export data
@@ -213,7 +217,6 @@ st_write(df,file.path(datadir, 'bz_data.geojson'), driver = 'geojson', delete_ds
 
 df %>%
   st_set_geometry(NULL) %>%
-  filter(state %in% c('GA', 'SC')) %>%
   write.csv(file.path(datadir, 'cons_data.csv'), row.names = FALSE)
 
 

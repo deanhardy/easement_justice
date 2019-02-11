@@ -7,19 +7,17 @@ library(sf)
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
 
-df2 <- st_read(file.path(datadir, 'tncxtnc.geojson'))
-leaflet() %>%
-  addTiles(group = "Open Street Map") %>%
-  addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
-  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
-  setView(lng = -81, lat = 33, zoom = 7) %>%
-  addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
-  addPolygons(data = df2)
+# df2 <- st_read(file.path(datadir, 'cons_lands.geojson'))
+# leaflet() %>%
+#   addTiles(group = "Open Street Map") %>%
+#   addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
+#   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+#   setView(lng = -81, lat = 33, zoom = 7) %>%
+#   addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
+#   addPolygons(data = df2)
 
-df <- st_read(file.path(datadir, 'bz_data.geojson')) %>%
-  filter(ecorg_tier == 1)
-bf <- st_read(file.path(datadir, 'buf_zones.geojson')) %>%
-  filter(ecorg_tier == 1)
+df <- st_read(file.path(datadir, 'bz_data.geojson'))
+bz <- st_read(file.path(datadir, 'ben_zones.geojson'))
 
 pal <- colorFactor(rainbow(3), df$conscat)
 
@@ -32,7 +30,7 @@ m <- leaflet() %>%
   addPolygons(data = df,
               popup = paste("Site Name:", df$sitename, "<br>",
                             "Management:", df$management, "<br>",
-                            "Conservation Area (Acres):", round(df$acres, 0), "<br>",
+                            #"Conservation Area (Acres):", round(df$acres, 0), "<br>",
                             "Beneficiary Zone (KM^2):", round(df$sqkm_buf, 0), "<br>",
                             "Land (%):", 100*df$pland, "<br>",
                             "People of Color (%):", 100*df$propPOC, "<br>",
@@ -49,12 +47,12 @@ m <- leaflet() %>%
               fillColor = ~pal(df$conscat),
               fillOpacity = 0.5,
               weight = 1) %>%
-  addPolylines(data = bf, 
-               color = ~pal(bf$conscat),
+  addPolylines(data = bz, 
+               color = ~pal(bz$conscat),
                weight = 1, 
-               group = "Buffer Zones") %>%
+               group = "Beneficiary Zones") %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-      overlayGroups = c("Conservation Areas", "Buffer Zones"),
+      overlayGroups = c("Conservation Areas", "Beneficiary Zones"),
       options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
             pal = pal,

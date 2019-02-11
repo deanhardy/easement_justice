@@ -4,36 +4,31 @@ library(lme4)
 library(emmeans)
 library(multcompView)
 library(HH)
-# library(tidyverse)
-# library(sf)
 
-
-# df <- st_read('data/bz_data_erp.geojson') %>%
-#   st_set_geometry(NULL) %>%
-#   mutate(state = as.character(state)) %>%
-#   filter(str_detect(state, 'GA|SC'))
-# 
-# write.csv(df, 'data/cons_data.csv')
+#define data directory
+datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ## import data
-df <- read.csv('data/cons_data.csv')
+df <- read.csv(file.path(datadir, 'cons_data.csv'))
 
 #########################################
 ## data exploration
 #########################################
-boxplot(propPOC~type, df, notch = TRUE)
+boxplot(emedhhinc~conscat, df, notch = TRUE)
 
-df2 <-filter(df, type == 'Easement')
-hist(df$mnhhinc)
+# density plot
+ggplot(df, aes(x = emedhhinc, group = conscat)) +
+  geom_density(aes(color = conscat)) +
+  theme_bw()
 
 ####################################
 ## statistical analysis
 ####################################
 
 ## linear regression model with no mixed effects
-model <- glm(mnhhinc ~ type + state, data = df)
+model <- glm(emedhhinc ~ conscat, data = df)
 summary(model)
-lsm <- lsmeans(model, ~type)
+lsm <- lsmeans(model, ~conscat)
 cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 
 ## linear mixed effects model with state jurisdiction as categorial random effect
@@ -50,9 +45,9 @@ cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 # https://blog.cloudera.com/blog/2015/12/common-probability-distributions-the-data-scientists-crib-sheet/
 
 ## ancova, but need to check against assumptions, as pretty sure normal dist is violated
-model <- ancova(propPOC ~ sqkm_buf + type, data = df)
+model <- ancova(propPOC ~ sqkm_buf + conscat, data = df)
 summary(model)
-lsm <- lsmeans(model, ~type)
+lsm <- lsmeans(model, ~conscat)
 cld(lsm, details = TRUE, alpha = 0.05, Letters = letters, adjust = 'bonferroni')
 
 
