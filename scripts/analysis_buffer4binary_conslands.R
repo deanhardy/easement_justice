@@ -55,13 +55,16 @@ cl_buf <- rbind(pvt_buf, pub_buf)
 
 table(cl_buf$buf_m, cl_buf$conscat)
 
-st_write(cl_buf, file.path(datadir, 'conslands_er1_bufs.geojson'))
+st_write(cl_buf, file.path(datadir, 'conslands_er1_bufs.geojson'), delete_dsn=TRUE)
 
 #########################
-##
+## leaflet map
 #########################
+library(leaflet)
+library(leaflet.extras)
 
-cl <- st_transform(dat, 4326)
+pvt2 <- st_cast(pvt, 'POLYGON') %>% st_transform(4326)
+pub2 <- st_cast(pub, 'POLYGON') %>% st_transform(4326)
 buf <- cl_buf %>% st_as_sf() %>% st_transform(4326)
 
 pal <- colorFactor(rainbow(7), buf$buf_m)
@@ -75,13 +78,18 @@ m <- leaflet() %>%
               fillOpacity = 0.5,
               weight = 1, 
               group = "Buffer Zones") %>%
-  addPolygons(data = cl,
-              group = "Conservation Areas",
-              fillColor = cl$conscat,
+  addPolygons(data = pub2,
+              group = "Public Reserves",
+              fillColor = 'green',
+              fillOpacity = 0.5,
+              weight = 1) %>%
+  addPolygons(data = pvt2,
+              group = "Private Reserves",
+              fillColor = 'red',
               fillOpacity = 0.5,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map"), 
-                   overlayGroups = c("Conservation Areas", "Buffer Zones"),
+                   overlayGroups = c("Private Reserves", "Public Reserves", "Buffer Zones"),
                    options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
             pal = pal,
