@@ -9,8 +9,10 @@ library(tidyverse)
 library(sf)
 
 ## define variables
-DIST = c(8000, 16000, 24000) ## distance (m) of buffer zones
-PERC = c(0.005, 0.01, 0.02) ## percent of buffer zone for unioning reserves
+#DIST = c(8000, 16000, 24000) ## distance (m) of beneficiary zones used in demographic analysis
+#PERC = c(0.005, 0.01, 0.02) ## percent of buffer zone for unioning reserves
+DIST = c(40,80,120,160,240,320,480) ## distance of buffer zones as produce of DIST * PERC
+
 pub_buf <- NULL
 pvt_buf <- NULL
 
@@ -31,33 +33,29 @@ pvt <- dat %>%
 #### still working on this; some of the combos produce same result
 ## private and public reserves in close proximity via buffering
 ## nested for loop
-for(i in PERC) {
-for(j in DIST) {
-  OUT <- pub %>%
-    st_buffer(., dist = i * j) %>%
-    st_cast("POLYGON") %>%
-    data.frame() %>%
-    mutate(buf_m = i * j, conscat = 'Public')
-  pub_buf <- rbind(OUT, pub_buf)
-}
+for(i in DIST) {
+   OUT <- pub %>%
+     st_buffer(., dist = i) %>%
+     st_cast("POLYGON") %>%
+     data.frame() %>%
+     mutate(buf_m = i, conscat = 'Public')
+   pub_buf <- rbind(OUT, pub_buf)
 }
 
-for(i in PERC) {
-  for(j in DIST) {
+for(i in DIST) {
     OUT <- pvt %>%
-      st_buffer(., dist = i * j) %>%
+      st_buffer(., dist = i) %>%
       st_cast("POLYGON") %>%
       data.frame() %>%
-      mutate(buf_m = i * j, conscat = 'Private')
+      mutate(buf_m = i, conscat = 'Private')
     pvt_buf <- rbind(OUT, pvt_buf)
-  }
 }
 
 cl_buf <- rbind(pvt_buf, pub_buf)
 
 table(cl_buf$buf_m, cl_buf$conscat)
 
-st_write(cl_buf, file.path(datadir, 'conslands_er1_bufs.shp'), driver = 'ESRI Shapefile')
+st_write(cl_buf, file.path(datadir, 'conslands_er1_bufs.geojson'))
 
 #########################
 ##
