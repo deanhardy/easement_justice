@@ -17,10 +17,9 @@ datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
 ## data import
 ##############################################################
 
-cons <- st_read(file.path(datadir, 'conslands_er1_bufs.shp')) %>%
+cons <- st_read(file.path(datadir, 'conslands_er1_bufs.geojson')) %>%
   rowid_to_column() %>%
-  st_transform(crs = alb) %>%
-  filter(buf_m == CLBUF)
+  st_transform(crs = alb)
 
 ## import census data
 bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
