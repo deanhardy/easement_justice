@@ -3,20 +3,25 @@ rm(list=ls())
 library(tidyverse)
 library(sf)
 library(lwgeom)
+library(tidycensus)
+options(tigris_use_cache = TRUE)
 
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-BZONE = 16000 ## beneficiary zone buffer distance
-CLBUF = 160 ## cons lands buffer distance
+BZONE = c(8000, 16000, 24000) ## beneficiary zone buffer distance
+# CLBUF = 160 ## cons lands buffer distance
+YR <- 2016
+ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
+gm <- NULL # used in for loop for calculating gmedian
+cons_bzone <- NULL
 
 #define data directory
-datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
 
 ##############################################################
 ## data import
 ##############################################################
-
 cons <- st_read(file.path(datadir, 'conslands_er1_bufs.geojson')) %>%
   rowid_to_column() %>%
   st_transform(crs = alb)
@@ -26,21 +31,28 @@ bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
   st_transform(crs = alb)
 
 # density plot
-ggplot(bg, aes(x = white)) +
-  geom_density() +
-  theme_bw()
-
-
-
-###################################################
-## apply proportional area adjustment to variables
-## to assess count within buffer zones
-###################################################
+# ggplot(bg, aes(x = white)) +
+#   geom_density() +
+#   theme_bw()
 
 ## euclidean distance buffering
-bz <- cons %>%
-  st_buffer(dist = BZONE) %>%
-  mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
+# bz <- cons %>%
+#   st_buffer(dist = BZONE) %>%
+#   mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
+
+for(i in BZONE) {
+  OUT <- cons %>%
+    st_buffer(., dist = i) %>%
+    #st_cast("POLYGON") %>%
+    data.frame() %>%
+    mutate(bzone_m = i, sqkm_buf = as.numeric(st_area(geometry) / 1e6))
+  cons_bzone <- rbind(OUT, cons_bzone)
+}
+
+test <- cons_bzone %>%
+  filter()
+
+table(cons_bzone$bzone_m, cons_bzone$buf_m)
 
 st_centroid(bz) %>%
   st_transform(4326) %>%
@@ -49,6 +61,12 @@ st_centroid(bz) %>%
 
 bz %>% st_transform(4326) %>%
   st_write(file.path(datadir, 'ben_zones.geojson'), driver = 'geojson', delete_dsn = TRUE)
+
+
+###################################################
+## apply proportional area adjustment to variables
+## to assess count within buffer zones
+###################################################
 
 ## define intersection between buffer zones and block groups
 int <- as.tibble(st_intersection(bz, bg))
@@ -88,9 +106,9 @@ bz_geog <- percBGinBUF %>%
   st_as_sf()
 
 # density plot
-ggplot(bz_geog, aes(x = pwhite, group = conscat)) +
-  geom_density(aes(color = conscat)) +
-  theme_bw()
+# ggplot(bz_geog, aes(x = pwhite, group = conscat)) +
+#   geom_density(aes(color = conscat)) +
+#   theme_bw()
 
 
 
@@ -102,15 +120,6 @@ ggplot(bz_geog, aes(x = pwhite, group = conscat)) +
 
 ## good explanation for how this works mathematically and upon which the function below is based
 ## https://www.mathsisfun.com/data/frequency-grouped-mean-median-mode.html
-
-## define variables 
-YR <- 2016
-ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
-gm <- NULL # used in for loop
-
-## load libraries
-library(tidycensus)
-options(tigris_use_cache = TRUE)
 
 ## download hh income distribution tables for block groups & label bins
 for(i in 1:length(ST)) {
