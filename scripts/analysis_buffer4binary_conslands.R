@@ -17,7 +17,7 @@ pub_buf <- NULL
 pvt_buf <- NULL
 
 #define data directory
-datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## read in data
 dat <- st_read(file.path(datadir, 'cons_lands.shp'))
@@ -54,6 +54,7 @@ cl_buf <- rbind(pvt_buf, pub_buf)
 
 table(cl_buf$buf_m, cl_buf$conscat)
 
+## save ecoregion 1 (ie lowcountry) cons lands
 cl_buf %>% st_as_sf() %>% st_transform(4326) %>%
   st_write(file.path(datadir, 'conslands_er1_bufs.geojson'), delete_dsn=TRUE)
 

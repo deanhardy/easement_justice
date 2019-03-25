@@ -1,4 +1,9 @@
-## this script downloads spatial census data on race from several states
+################################################
+## PURPOSE: this script downloads spatial census data on race, income, housing
+## from several states in the lowcountry region of the US Southeast
+## BY: Dean Hardy
+################################################
+ 
 rm(list=ls())
 
 library(tidyverse)
