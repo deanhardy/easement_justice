@@ -9,8 +9,11 @@ options(tigris_use_cache = TRUE)
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-BZONE = c(16000) ## beneficiary zone distance
-BUF = c(0.005, 0.01, 0.02) ## Buffer distance as percent of BZONE
+BZONE = c(8000,16000,24000) ## beneficiary zone distance
+PERC = c(0.005, 0.01, 0.02) ## Buffer distance as percent of BZONE
+# BUF <- crossing(BZONE, PERC) %>% mutate(BUF = BZONE * PERC) %>% select(BUF) %>% unique()
+BUF <- c(80,160,320)
+  
 # CLBUF = 160 ## cons lands buffer distance
 YR <- 2016
 ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
@@ -44,10 +47,10 @@ bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
 ## for each buffered conservation reserve create a beneficiary zone (BZONE) around it
 # for demographic analysis
 ## doing this just for the 16KM BZONE for now...
-for(i in BZONE) {
+for(i in BZONE[2]) {
   for(j in BUF) {
   OUT <- cons %>%
-    filter(buf_m == j * i) %>%
+    filter(buf_m == j) %>%
     st_buffer(., dist = i) %>%
     st_cast("POLYGON") %>%
     data.frame() %>%
@@ -55,14 +58,15 @@ for(i in BZONE) {
   cons_bzone <- rbind(OUT, cons_bzone)
 }
 }
-cons_bzone2 <- st_sf(cons_bzone)
+bz <- st_sf(cons_bzone) %>%
+  mutate(buf_m = as.character(buf_m))
 
 # test <- cons_bzone %>%
 #   filter()
 
-table(cons_bzone2$bzone_m, cons_bzone2$buf_m)
+table(bz$bzone_m, bz$buf_m)
 
-st_centroid(cons_bzone2) %>%
+st_centroid(bz) %>%
   st_transform(4326) %>%
   select(rowid) %>%
   st_write(file.path(datadir, 'bz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)

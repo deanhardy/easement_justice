@@ -9,13 +9,13 @@ library(tidyverse)
 library(sf)
 
 ## define variables
-#DIST = c(8000, 16000, 24000) ## distance (m) of beneficiary zones used in demographic analysis
-#PERC = c(0.005, 0.01, 0.02) ## percent of buffer zone for unioning reserves
-DIST = c(40,80,120,160,240,320,480) ## distance of buffer zones as product of DIST * PERC
+BZONE = c(8000, 16000, 24000) ## distance (m) of beneficiary zones used in demographic analysis
+PERC = c(0.005, 0.01, 0.02) ## percent of buffer zone for unioning reserves
+BUF = c(40,80,120,160,240,320,480) ## distance of buffer zones as product of BZONE * PERC
 
 pub_buf <- NULL
 pvt_buf <- NULL
-
+r
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
@@ -30,9 +30,8 @@ pvt <- dat %>%
   filter(ecorg_tier == 1 & conscat == 'Private') %>%
   st_union()
 
-#### still working on this; some of the combos produce same result
 ## private and public reserves in close proximity via buffering
-for(i in DIST) {
+for(i in BUF) {
    OUT <- pub %>%
      st_buffer(., dist = i) %>%
      st_cast("POLYGON") %>%
@@ -41,7 +40,7 @@ for(i in DIST) {
    pub_buf <- rbind(OUT, pub_buf)
 }
 
-for(i in DIST) {
+for(i in BUF) {
     OUT <- pvt %>%
       st_buffer(., dist = i) %>%
       st_cast("POLYGON") %>%
