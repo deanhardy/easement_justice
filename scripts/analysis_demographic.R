@@ -9,15 +9,15 @@ options(tigris_use_cache = TRUE)
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-BZONE = c(8000, 16000, 24000) ## beneficiary zone buffer distance
-# CLBUF = 160 ## cons lands buffer distance
+BENZ = c(8000, 16000, 24000) ## beneficiary zone distance
+BUFP = c(0.005, 0.01, 0.02) ## cons lands buffer distance proportion of BENZ
 YR <- 2016
 ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
 gm <- NULL # used in for loop for calculating gmedian
-cons_bzone <- NULL
+
 
 #define data directory
-datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ##############################################################
 ## data import
@@ -40,27 +40,38 @@ bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
 #   st_buffer(dist = BZONE) %>%
 #   mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
 
-for(i in BZONE) {
-  OUT <- cons %>%
-    st_buffer(., dist = i) %>%
-    #st_cast("POLYGON") %>%
-    data.frame() %>%
-    mutate(bzone_m = i, sqkm_buf = as.numeric(st_area(geometry) / 1e6))
-  cons_bzone <- rbind(OUT, cons_bzone)
+cabz <- NULL ## Conservation Area Beneficiary Zone
+for(i in BENZ) {
+  for(j in BUFP) {
+   OUT <- cons %>%
+     filter(cons$buf_m == i * j) %>%
+     st_buffer(., dist = i) %>%
+     data.frame() %>%
+     mutate(bzone_m = i, sqkm_bz = as.numeric(st_area(geometry) / 1e6))
+   cabz <- rbind(OUT, cabz)
+  }
 }
 
-test <- cons_bzone %>%
-  filter()
+# for(i in BENZ) {
+#   OUT <- cons %>%
+#     st_buffer(., dist = i) %>%
+#     #st_cast("POLYGON") %>%
+#     data.frame() %>%
+#     mutate(bzone_m = i, sqkm_buf = as.numeric(st_area(geometry) / 1e6))
+#   cons_bzone <- rbind(OUT, cons_bzone)
+# }
 
-table(cons_bzone$bzone_m, cons_bzone$buf_m)
+table(cabz$bzone_m, cabz$buf_m)
 
-st_centroid(bz) %>%
+cabz <- cabz %>% st_as_sf()
+
+st_centroid(cabz) %>%
   st_transform(4326) %>%
   select(rowid) %>%
-  st_write(file.path(datadir, 'bz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
+  st_write(file.path(datadir, 'cabz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
-bz %>% st_transform(4326) %>%
-  st_write(file.path(datadir, 'ben_zones.geojson'), driver = 'geojson', delete_dsn = TRUE)
+cabz %>% st_transform(4326) %>%
+  st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 
 ###################################################
@@ -68,40 +79,40 @@ bz %>% st_transform(4326) %>%
 ## to assess count within buffer zones
 ###################################################
 
-## define intersection between buffer zones and block groups
-int <- as.tibble(st_intersection(bz, bg))
+## define intersection between cons area ben zones and block groups
+int <- as_tibble(st_intersection(cabz, bg))
 
 ## proportional area adjustment/allocation method
-percBGinBUF <- int %>%
-  mutate(sqkm_bginbuf = as.numeric(st_area(geometry) / 1e6)) %>%
-  mutate(perc_bginbuf = (sqkm_bginbuf/sqkm_bg))
+percBGinBZ <- int %>%
+  mutate(sqkm_bginbz = as.numeric(st_area(geometry) / 1e6)) %>%
+  mutate(perc_bginbz = (sqkm_bginbz/sqkm_bg))
 
 ## save percBGinBUF data to use in median HH income estimation (see below)
-bg_for_emed <- percBGinBUF %>%
+bg_for_emed <- percBGinBZ %>%
   data.frame() %>%
   mutate(GEOID = as.character(GEOID)) %>%
-  select(rowid, GEOID, perc_bginbuf) %>%
-  rename(BUFID = rowid)
+  select(rowid, GEOID, perc_bginbz) %>%
+  rename(BZID = rowid)
 
-bz_geog <- percBGinBUF %>%
-  mutate(tot_pop = total * perc_bginbuf,
-         white = white * perc_bginbuf, 
-         black = black * perc_bginbuf,
-         other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbuf,
+bz_geog <- percBGinBZ %>%
+  mutate(tot_pop = total * perc_bginbz,
+         white = white * perc_bginbz, 
+         black = black * perc_bginbz,
+         other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbz,
          #other = multiracial * perc_bginbuf,
-         latinx = latinx * perc_bginbuf,
-         hu = hu * perc_bginbuf,
-         ALAND = ALAND * perc_bginbuf) %>%
+         latinx = latinx * perc_bginbz,
+         hu = hu * perc_bginbz,
+         ALAND = ALAND * perc_bginbz) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
   group_by(rowid) %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = sum(hu, na.rm = TRUE), agghhinc = sum(agghhinc, na.rm = TRUE),
-            sqkm_buf = mean(sqkm_buf), ALAND = sum(ALAND)) %>%
+            sqkm_bz = mean(sqkm_bz), ALAND = sum(ALAND)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/ALAND, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0), pland = round((ALAND * 0.000001)/sqkm_buf, 2)) %>%
-  dplyr::select(rowid, tot_pop, popden, sqkm_buf, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
+  dplyr::select(rowid, tot_pop, popden, sqkm_bz, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
 
