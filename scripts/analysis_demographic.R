@@ -225,6 +225,6 @@ st_write(df,file.path(datadir, 'bz_data.geojson'), driver = 'geojson', delete_ds
 
 df %>%
   st_set_geometry(NULL) %>%
-  write.csv(file.path(datadir, 'cons_data.csv'), row.names = FALSE)
+  write.csv(file.path(datadir, 'cabz_data.csv'), row.names = FALSE)
 
 
