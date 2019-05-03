@@ -47,6 +47,8 @@ for(i in BENZ) {
 
 cabz <- cabz %>% st_as_sf() ## re-spatialize
 
+cabz <- filter(cabz, !(cabz$bzone_m == 8000 & cabz$buf_m %in% c(80,160))) ## filter redundancies
+
 table(cabz$bzone_m, cabz$buf_m) ## check results
 
 ## export centroids of cabz
@@ -80,6 +82,7 @@ bg_for_emed <- percBGinBZ %>%
   select(rowid, GEOID, perc_bginbz) %>%
   rename(BZID = rowid)
 
+## demographic analysis of cons area ben zones
 bz_geog <- percBGinBZ %>%
   mutate(tot_pop = total * perc_bginbz,
          white = white * perc_bginbz, 
@@ -90,14 +93,14 @@ bz_geog <- percBGinBZ %>%
          hu = hu * perc_bginbz,
          ALAND = ALAND * perc_bginbz) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
-  group_by(rowid) %>%
+  group_by(rowid) %>% ## regroups to cons areas after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = sum(hu, na.rm = TRUE), agghhinc = sum(agghhinc, na.rm = TRUE),
             sqkm_bz = mean(sqkm_bz), ALAND = sum(ALAND)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/ALAND, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0), pland = round((ALAND * 0.000001)/sqkm_buf, 2)) %>%
+         mnhhinc = round(agghhinc/hu, 0), pland = round((ALAND * 0.000001)/sqkm_bz, 2)) %>%
   dplyr::select(rowid, tot_pop, popden, sqkm_bz, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
   merge(cons, by = 'rowid') %>%
   st_as_sf()
@@ -193,15 +196,15 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 
 bg2 <- gm %>%
   left_join(bg_for_emed, by = "GEOID") %>%
-  filter(perc_bginbuf != 'NA') %>%
-  mutate(eHH = households * perc_bginbuf) %>%
-  group_by(BUFID, variable) %>%
+  filter(perc_bginbz != 'NA') %>%
+  mutate(eHH = households * perc_bginbz) %>%
+  group_by(BZID, variable) %>%
   summarise(interval = interval[[1]], eHH = sum(eHH), households = sum(households)) %>%
   summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = 'cut'))
 
 ## import gmedian estimates for hh income
 emed <- bg2 %>%
-  rename(rowid = BUFID, emedhhinc = gmedian)
+  rename(rowid = BZID, emedhhinc = gmedian)
 
 ## merge emedian hh income with other demographic data
 df <- bz_geog %>% 
