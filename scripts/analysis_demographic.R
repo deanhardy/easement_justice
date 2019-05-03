@@ -9,17 +9,9 @@ options(tigris_use_cache = TRUE)
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-<<<<<<< HEAD
 BENZ = c(8000, 16000, 24000) ## beneficiary zone distance
 BUFP = c(0.005, 0.01, 0.02) ## cons lands buffer distance proportion of BENZ
-=======
-BZONE = c(8000,16000,24000) ## beneficiary zone distance
-PERC = c(0.005, 0.01, 0.02) ## Buffer distance as percent of BZONE
-# BUF <- crossing(BZONE, PERC) %>% mutate(BUF = BZONE * PERC) %>% select(BUF) %>% unique()
-BUF <- c(80,160,320)
-  
-# CLBUF = 160 ## cons lands buffer distance
->>>>>>> 6572b4722264fbd559f4ff2e351a202fea8c2220
+
 YR <- 2016
 ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
 gm <- NULL # used in for loop for calculating gmedian
@@ -39,17 +31,8 @@ cons <- st_read(file.path(datadir, 'conslands_er1_bufs.geojson')) %>%
 bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
   st_transform(crs = alb)
 
-# density plot
-# ggplot(bg, aes(x = white)) +
-#   geom_density() +
-#   theme_bw()
-
-## euclidean distance buffering
-# bz <- cons %>%
-#   st_buffer(dist = BZONE) %>%
-#   mutate(sqkm_buf = as.numeric(st_area(geometry) / 1e6))
-
-<<<<<<< HEAD
+## for each buffered conservation reserve create a beneficiary zone (BZONE) around it
+# for demographic analysis
 cabz <- NULL ## Conservation Area Beneficiary Zone
 for(i in BENZ) {
   for(j in BUFP) {
@@ -60,50 +43,19 @@ for(i in BENZ) {
      mutate(bzone_m = i, sqkm_bz = as.numeric(st_area(geometry) / 1e6))
    cabz <- rbind(OUT, cabz)
   }
-=======
-## for each buffered conservation reserve create a beneficiary zone (BZONE) around it
-# for demographic analysis
-## doing this just for the 16KM BZONE for now...
-for(i in BZONE[2]) {
-  for(j in BUF) {
-  OUT <- cons %>%
-    filter(buf_m == j) %>%
-    st_buffer(., dist = i) %>%
-    st_cast("POLYGON") %>%
-    data.frame() %>%
-    mutate(bzone_m = i, sqkm_buf = as.numeric(st_area(geometry) / 1e6))
-  cons_bzone <- rbind(OUT, cons_bzone)
->>>>>>> 6572b4722264fbd559f4ff2e351a202fea8c2220
 }
-}
-bz <- st_sf(cons_bzone) %>%
-  mutate(buf_m = as.character(buf_m))
 
-<<<<<<< HEAD
-# for(i in BENZ) {
-#   OUT <- cons %>%
-#     st_buffer(., dist = i) %>%
-#     #st_cast("POLYGON") %>%
-#     data.frame() %>%
-#     mutate(bzone_m = i, sqkm_buf = as.numeric(st_area(geometry) / 1e6))
-#   cons_bzone <- rbind(OUT, cons_bzone)
-# }
+cabz <- cabz %>% st_as_sf() ## re-spatialize
 
-table(cabz$bzone_m, cabz$buf_m)
+table(cabz$bzone_m, cabz$buf_m) ## check results
 
-cabz <- cabz %>% st_as_sf()
-=======
-# test <- cons_bzone %>%
-#   filter()
-
-table(bz$bzone_m, bz$buf_m)
->>>>>>> 6572b4722264fbd559f4ff2e351a202fea8c2220
-
+## export centroids of cabz
 st_centroid(cabz) %>%
   st_transform(4326) %>%
   select(rowid) %>%
   st_write(file.path(datadir, 'cabz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
+## export cabz as polygons
 cabz %>% st_transform(4326) %>%
   st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
@@ -133,7 +85,7 @@ bz_geog <- percBGinBZ %>%
          white = white * perc_bginbz, 
          black = black * perc_bginbz,
          other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbz,
-         #other = multiracial * perc_bginbuf,
+         #other = multiracial * perc_bginbz,
          latinx = latinx * perc_bginbz,
          hu = hu * perc_bginbz,
          ALAND = ALAND * perc_bginbz) %>%
