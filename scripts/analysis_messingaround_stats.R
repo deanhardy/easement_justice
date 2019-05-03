@@ -6,15 +6,20 @@ library(multcompView)
 library(HH)
 
 #define data directory
-datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## import data
-df <- read.csv(file.path(datadir, 'cons_data.csv'))
+df <- read.csv(file.path(datadir, 'cabz_data.csv'))
 
 #########################################
 ## data exploration
 #########################################
-boxplot(emedhhinc~conscat, df, notch = TRUE)
+
+df %>% filter(buf_m == 480) %>%
+  ggplot() + 
+  geom_boxplot(aes(conscat, propPOC))
+  
+# boxplot(propPOC~conscat, . notch = TRUE)
 
 # density plot
 ggplot(df, aes(x = emedhhinc, group = conscat)) +
