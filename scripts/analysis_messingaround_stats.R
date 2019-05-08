@@ -4,22 +4,31 @@ library(lme4)
 library(emmeans)
 library(multcompView)
 library(HH)
+library(tidyverse)
 
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## import data
-df <- read.csv(file.path(datadir, 'cabz_data.csv'))
+df <- read.csv(file.path(datadir, 'cabz_data.csv'), stringsAsFactors = F)
 
 #########################################
 ## data exploration
 #########################################
+VARS <- c('emedhhinc', 'pblack', 'propPOC', 'pwhite', 'popden')
 
-df %>% filter(buf_m == 480) %>%
-  ggplot() + 
-  geom_boxplot(aes(conscat, propPOC))
-  
-# boxplot(propPOC~conscat, . notch = TRUE)
+lapply(VARS, function(z) {
+  ggplot(df) + 
+  geom_boxplot(aes_string('conscat', z)) + 
+  facet_grid(bzone_m ~ buf_m) + 
+  ggsave(file.path(datadir, paste('/figures/', 'boxplot_', z, '.png', sep='')))
+})
+
+lapply(VARS, function(z) {
+  ggplot(df, aes_string(x = z, group = 'conscat')) + 
+    geom_density(aes(color = conscat)) + 
+    ggsave(file.path(datadir, paste('/figures/', 'density_', z, '.png', sep='')))
+})
 
 # density plot
 ggplot(df, aes(x = emedhhinc, group = conscat)) +
