@@ -57,9 +57,6 @@ st_centroid(cabz) %>%
   select(rowid) %>%
   st_write(file.path(datadir, 'cabz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
-## export cabz as polygons
-cabz %>% st_transform(4326) %>%
-  st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 
 ###################################################
@@ -73,7 +70,7 @@ int <- as_tibble(st_intersection(cabz, bg))
 ## proportional area adjustment/allocation method
 percBGinBZ <- int %>%
   mutate(sqkm_bginbz = as.numeric(st_area(geometry) / 1e6)) %>%
-  mutate(perc_bginbz = (sqkm_bginbz/sqkm_bg))
+  mutate(perc_bginbz = (sqkm_bginbz/sqkm_bg), sqkm_land = ALAND/ 1e6)
 
 ## save percBGinBUF data to use in median HH income estimation (see below)
 bg_for_emed <- percBGinBZ %>%
@@ -91,18 +88,18 @@ bz_geog <- percBGinBZ %>%
          #other = multiracial * perc_bginbz,
          latinx = latinx * perc_bginbz,
          hu = hu * perc_bginbz,
-         ALAND = ALAND * perc_bginbz) %>%
+         sqkm_land = sqkm_land * perc_bginbz) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
   group_by(rowid) %>% ## regroups to cons areas after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
-            hu = sum(hu, na.rm = TRUE), agghhinc = sum(agghhinc, na.rm = TRUE),
-            sqkm_bz = mean(sqkm_bz), ALAND = sum(ALAND)) %>%
+            hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
+            sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
-         platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/ALAND, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0), pland = round((ALAND * 0.000001)/sqkm_bz, 2)) %>%
-  dplyr::select(rowid, tot_pop, popden, sqkm_bz, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc) %>%
+         platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
+         mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
   merge(cons, by = 'rowid') %>%
+  dplyr::select(rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
 # density plot
@@ -204,7 +201,8 @@ bg2 <- gm %>%
 
 ## import gmedian estimates for hh income
 emed <- bg2 %>%
-  rename(rowid = BZID, emedhhinc = gmedian)
+  rename(rowid = BZID, emedhhinc = gmedian) %>%
+  mutate(emedhhinc = round(emedhhinc, 0))
 
 ## merge emedian hh income with other demographic data
 df <- bz_geog %>% 
@@ -221,8 +219,10 @@ ggplot(df, aes(x = emedhhinc, group = conscat)) +
 ## export data
 ##############################
 
-st_write(df,file.path(datadir, 'bz_data.geojson'), driver = 'geojson', delete_dsn = TRUE)
+## export cabz as polygons
+df %>% st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
+## export ONLY attribute data
 df %>%
   st_set_geometry(NULL) %>%
   write.csv(file.path(datadir, 'cabz_data.csv'), row.names = FALSE)
