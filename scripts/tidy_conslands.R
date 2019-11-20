@@ -101,7 +101,7 @@ df_sum <- dat %>%
   st_drop_geometry() %>%
   mutate(management = as.character(management)) %>%
   group_by(source, management) %>%
-  dplyr::summarise(count = n())
+  dplyr::summarise(count = n(), acres = sum(round(acres,0)))
 
 write.csv(df_sum, file.path(datadir, 'mgmt-by-data-source.csv'))
 
