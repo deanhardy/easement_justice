@@ -68,11 +68,9 @@ pub2 <- st_cast(pub, 'POLYGON') %>% st_transform(4326)
 buf <- cl_buf %>% st_as_sf() %>% st_transform(4326)
 
 pvt2 %>%
-  st_write(file.path(datadir, 'pvt.shp'), driver = 'ESRI Shapefile')
+  st_write(file.path(datadir, 'pvt.geojson'), driver = 'geojson')
 pub2 %>%
-  st_write(file.path(datadir, 'pub.shp'), driver = 'ESRI Shapefile')
-
-st_write()
+  st_write(file.path(datadir, 'pub.geojson'), driver = 'geojson')
 
 pal <- colorFactor(rainbow(7), buf$buf_m)
 
