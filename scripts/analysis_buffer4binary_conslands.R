@@ -15,7 +15,7 @@ BUF = c(40,80,120,160,240,320,480) ## distance of buffer zones as product of BZO
 
 pub_buf <- NULL
 pvt_buf <- NULL
-r
+
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
@@ -66,6 +66,13 @@ library(leaflet.extras)
 pvt2 <- st_cast(pvt, 'POLYGON') %>% st_transform(4326)
 pub2 <- st_cast(pub, 'POLYGON') %>% st_transform(4326)
 buf <- cl_buf %>% st_as_sf() %>% st_transform(4326)
+
+pvt2 %>%
+  st_write(file.path(datadir, 'pvt.shp'), driver = 'ESRI Shapefile')
+pub2 %>%
+  st_write(file.path(datadir, 'pub.shp'), driver = 'ESRI Shapefile')
+
+st_write()
 
 pal <- colorFactor(rainbow(7), buf$buf_m)
 

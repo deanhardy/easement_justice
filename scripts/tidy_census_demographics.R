@@ -11,6 +11,9 @@ library(tidycensus)
 options(tigris_use_cache = TRUE)
 library(sf)
 
+#define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
 ## define variables
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 bg <- NULL
@@ -66,4 +69,10 @@ bg2 <- bg %>%
 
 ## export census data
 bg2 %>% st_transform(crs = 4326) %>%
-  st_write("data/bg_data.geojson", driver = 'geojson')
+  st_write(file.path(datadir, "bg_data.geojson"), driver = 'geojson', delete_dsn = TRUE)
+
+## export census data as centroids
+bg2 %>% 
+  st_centroid() %>%
+  st_transform(crs = 4326) %>%
+  st_write(file.path(datadir, "bg_data_cntrd.geojson"), driver = 'geojson', delete_dsn = TRUE)
