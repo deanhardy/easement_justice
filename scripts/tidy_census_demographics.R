@@ -17,6 +17,7 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 ## define variables
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 bg <- NULL
+st <- NULL
 YR <- 2016
 ST <- c('AL', 'GA', 'FL', 'SC', 'NC')
 var = c(white = "B03002_003E", black = "B03002_004E",
@@ -48,6 +49,17 @@ var = c(white = "B03002_003E", black = "B03002_004E",
 
 ## download census variables for selected states
 for(i in 1:length(ST)) {
+  OUT <- get_acs(geography = "state",
+                 variables = var,
+                 state = ST[[i]],
+                 year = YR,
+                 output = 'wide') %>%
+    data.frame()  
+  st <- rbind(OUT, st)
+}
+
+## download census variables of block groups for selected states
+for(i in 1:length(ST)) {
   OUT <- get_acs(geography = "block group",
               variables = var,
               state = ST[[i]],
@@ -58,6 +70,10 @@ for(i in 1:length(ST)) {
     data.frame()  
     bg <- rbind(OUT, bg)
 }
+
+st2 <- st %>%
+  dplyr::select(total, white, black, native_american, asian, hawaiian,
+                other, multiracial, latinx, medhhinc, agghhinc, hu)
 
 bg2 <- bg %>%
   st_sf() %>%
