@@ -99,7 +99,8 @@ bz_geog <- percBGinBZ %>%
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
   merge(cons, by = 'rowid') %>%
-  dplyr::select(rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, pblack, pother, platinx, propPOC, hu, mnhhinc, geometry) %>%
+  dplyr::select(rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
+                platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
 # density plot
