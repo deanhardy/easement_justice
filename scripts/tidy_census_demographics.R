@@ -71,9 +71,11 @@ for(i in 1:length(ST)) {
     bg <- rbind(OUT, bg)
 }
 
+## cleanup and export for use in comparison of state level numbers to CABZ numbers
 st2 <- st %>%
-  dplyr::select(total, white, black, native_american, asian, hawaiian,
+  dplyr::select(GEOID, NAME, total, white, black, native_american, asian, hawaiian,
                 other, multiracial, latinx, medhhinc, agghhinc, hu)
+write.csv(st2, file.path(datadir, 'st_data.csv'))
 
 bg2 <- bg %>%
   st_sf() %>%
