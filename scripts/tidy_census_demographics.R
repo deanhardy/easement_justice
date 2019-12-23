@@ -58,6 +58,12 @@ for(i in 1:length(ST)) {
   st <- rbind(OUT, st)
 }
 
+## cleanup and export for use in comparison of state level numbers to CABZ numbers
+st2 <- st %>%
+  dplyr::select(GEOID, NAME, total, white, black, native_american, asian, hawaiian,
+                other, multiracial, latinx, medhhinc, agghhinc, hu)
+write.csv(st2, file.path(datadir, 'st_data.csv'))
+
 ## download census variables of block groups for selected states
 for(i in 1:length(ST)) {
   OUT <- get_acs(geography = "block group",
@@ -71,18 +77,12 @@ for(i in 1:length(ST)) {
     bg <- rbind(OUT, bg)
 }
 
-## cleanup and export for use in comparison of state level numbers to CABZ numbers
-st2 <- st %>%
-  dplyr::select(GEOID, NAME, total, white, black, native_american, asian, hawaiian,
-                other, multiracial, latinx, medhhinc, agghhinc, hu)
-write.csv(st2, file.path(datadir, 'st_data.csv'))
-
 bg2 <- bg %>%
   st_sf() %>%
   st_transform(alb) %>%
   mutate(sqkm_bg = as.numeric(st_area(geometry)) / 1e6, mnhhinc = agghhinc/hu,
          propPOC = 1 - (white/total)) %>%
-  dplyr::select(GEOID, ALAND, AWATER, sqkm_bg, total, white, black, native_american, asian, hawaiian,
+  dplyr::select(STATEFP, GEOID, ALAND, AWATER, sqkm_bg, total, white, black, native_american, asian, hawaiian,
                 other, multiracial, latinx, propPOC, medhhinc, agghhinc, hu, mnhhinc)
 
 ## export census data

@@ -28,7 +28,12 @@ cons <- st_read(file.path(datadir, 'conslands_er1_bufs.geojson')) %>%
   st_transform(crs = alb)
 
 ## import census data
-bg <- st_read(file.path(datadir, "bg_data.geojson")) %>%
+bg <- st_read(file.path(datadir, "bg_data.geojson"), stringsAsFactors = FALSE) %>%
+  mutate(STATEFP = as.numeric(STATEFP), GEOID = as.numeric(GEOID)) %>%
+  mutate(statefp = ifelse(STATEFP == 37, 45,
+                          ifelse(STATEFP == 12, 13, 
+                                 ifelse(STATEFP == 1, 13, STATEFP))))%>%
+  filter(statefp != 'NA') %>%
   st_transform(crs = alb)
 
 ## for each buffered conservation reserve create a beneficiary zone (BZONE) around it
@@ -94,12 +99,13 @@ bz_geog <- percBGinBZ %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
-            sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m)) %>%
+            sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m),
+            statefp = round(mean(statefp)), 0) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
   merge(cons, by = 'rowid') %>%
-  dplyr::select(rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
+  dplyr::select(statefp, rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
                 platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
