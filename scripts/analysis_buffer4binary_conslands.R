@@ -53,6 +53,14 @@ cl_buf <- rbind(pvt_buf, pub_buf)
 
 table(cl_buf$buf_m, cl_buf$conscat)
 
+########################
+## working to add state to data
+########################
+cl2 <- cl_buf %>% st_as_sf() %>% st_transform(4326)
+
+library(tidycensus)
+
+
 ## save ecoregion 1 (ie lowcountry) cons lands
 cl_buf %>% st_as_sf() %>% st_transform(4326) %>%
   st_write(file.path(datadir, 'conslands_er1_bufs.geojson'), delete_dsn=TRUE)
