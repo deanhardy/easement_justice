@@ -99,9 +99,9 @@ dat <- rbind(nced, padus, tnc) %>%
 ## summary descriptive stats
 df_sum <- dat %>%
   st_drop_geometry() %>%
-  filter(ecorg_tier == 1) %>%
+  filter(ecorg_tier == 1 & state %in% c('GA', 'SC')) %>%
   mutate(management = as.character(management)) %>%
-  group_by(state, source, conscat) %>%
+  group_by(source, conscat, state) %>%
   dplyr::summarise(count = n(), acres = sum(round(acres,0)))
 df_sum
 
