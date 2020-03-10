@@ -12,6 +12,7 @@ library(sf)
 BZONE = c(8000, 16000, 24000) ## distance (m) of beneficiary zones used in demographic analysis
 PERC = c(0.005, 0.01, 0.02) ## percent of buffer zone for unioning reserves
 BUF = c(40,80,120,160,240,320,480) ## distance of buffer zones as product of BZONE * PERC
+alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 pub_buf <- NULL
 pvt_buf <- NULL
@@ -29,6 +30,9 @@ pub <- dat %>%
 pvt <- dat %>%
   filter(ecorg_tier == 1 & conscat == 'Private') %>%
   st_union()
+
+pub %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## miles^2
+pvt %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## miles^2
 
 ## private and public reserves in close proximity via buffering
 for(i in BUF) {
@@ -48,6 +52,9 @@ for(i in BUF) {
       mutate(buf_m = i, conscat = 'Private')
     pvt_buf <- rbind(OUT, pvt_buf)
 }
+
+pub_buf %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## mi^2
+pvt_buf %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## mi^2
 
 cl_buf <- rbind(pvt_buf, pub_buf)
 
