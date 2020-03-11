@@ -1,8 +1,8 @@
 ---
 title: "Lowcountry EJ Results"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
   word_document: default
 ---
 
@@ -12,6 +12,7 @@ library(magick)
 library(webshot)
 library(knitr)
 library(kableExtra)
+library(tidyverse)
 
 # webshot::install_phantomjs()
 ## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
@@ -24,7 +25,9 @@ library(kableExtra)
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 # df <- read.csv(file.path(datadir, 'cabz_data.csv'))
-df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))
+df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv')) %>%
+  select(-count) %>%
+  tidyr::spread(state,acres)
 ```
 
 ```{r, include = TRUE}
@@ -32,19 +35,19 @@ df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 dt <- mtcars[1:5, 1:4]
 
 # HTML table
-kable(df, format = "html", caption = "Demo Table") %>%
-  kable_styling(bootstrap_options = "striped",
-                full_width = F) %>%
- # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
-  add_footnote(c("table footnote")) 
+# kable(df, format = "html", caption = "Demo Table") %>%
+#   kable_styling(bootstrap_options = "striped",
+#                 full_width = F) %>%
+#  # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
+#   add_footnote(c("table footnote")) 
 
 # LaTeX Table
-# kable(dt, format = "latex", booktabs = T, caption = "Demo Table") %>%
-#   kable_styling(latex_options = c("striped", "hold_position"),
-#                 full_width = F) %>%
-#   add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
-#   add_footnote(c("table footnote"))
-#   as_image(width = 8)
+kable(df, format = "latex", booktabs = T, caption = "Demo Table") %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = F) %>%
+  add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
+  add_footnote(c("table footnote")) %>%
+  as_image()
 ```
 
 
