@@ -11,7 +11,7 @@ clr <- c('#fc8d59', '#ffffbf', '#91bfdb')
 clr2 <- c('#7570b3', '#1b9e77')
 
 #define data directory
-datadir <- file.path('C:/Users/dhardy/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## import "lowcountry" regions
 t1 <- st_read(file.path(datadir, "lc_tier1.shp")) %>%
@@ -164,6 +164,11 @@ png(file.path(datadir, 'figures/conslands_by_conscat.png'), units = 'in',
 fig
 dev.off()
 
+# tiff(file.path(datadir, 'figures/conslands_by_conscat.tif'), units = 'in',
+#     height = 5, width = 4, res = 300, compression = 'lzw')
+# fig
+# dev.off()
+
 
 #################################
 ## cons land by category for lowcountry only
@@ -202,13 +207,17 @@ fig <-
             outer.margins=c(0,0,0,0),
             # inner.margins=c(0,0,0,0), 
             asp=3.2/2)
-fig
+# fig
 
 png(file.path(datadir, 'figures/conslands_by_conscat_tier1.png'), units = 'in',
     height = 7.5, width = 13.33, res = 150)
 fig
 dev.off()
 
+tiff(file.path(datadir, 'figures/conslands_by_conscat_tier1.tif'), units = 'in',
+     height = 5, width = 4, res = 300, compression = 'lzw')
+fig
+dev.off()
 
 
 ## import buffers
