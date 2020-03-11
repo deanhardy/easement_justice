@@ -99,15 +99,18 @@ dat <- rbind(nced, padus, tnc) %>%
 ## summary descriptive stats
 df_sum <- dat %>%
   st_drop_geometry() %>%
+  filter(ecorg_tier == 1 & state %in% c('GA', 'SC')) %>%
   mutate(management = as.character(management)) %>%
-  group_by(source, management) %>%
+  group_by(source, conscat, state) %>%
   dplyr::summarise(count = n(), acres = sum(round(acres,0)))
+df_sum
 
-write.csv(df_sum, file.path(datadir, 'mgmt-by-data-source.csv'))
+write.csv(df_sum, file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 
 ## exploring the data
-table(dat$source, dat$conscat)
-# qtm(dat, fill = 'conscat')
+dat2<- dat %>% filter(ecorg_tier == 1) 
+table(dat2$source, dat2$conscat)
+1# qtm(dat, fill = 'conscat')
 
 ## export just lowcountry data
 dat %>% filter(ecorg_tier == 1) %>%

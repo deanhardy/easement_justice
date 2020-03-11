@@ -1,23 +1,50 @@
 ---
-title: "results_table"
+title: "Lowcountry EJ Results"
 output:
   html_document: default
   pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(stargazer)
+library(magick)
+library(webshot)
+library(knitr)
+library(kableExtra)
+
+# webshot::install_phantomjs()
+## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
 ```
 
 ## R Markdown
 
-```{r}
-df <- read.csv('data/bz_data.csv')
+```{r, include = FALSE}
+# define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
+# df <- read.csv(file.path(datadir, 'cabz_data.csv'))
+df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 ```
 
-```{r results = 'asis'}
-stargazer(glm((black/tot_pop) ~ type, data = df), type = 'html', digits = 0)
+```{r, include = TRUE}
+
+dt <- mtcars[1:5, 1:4]
+
+# HTML table
+kable(df, format = "html", caption = "Demo Table") %>%
+  kable_styling(bootstrap_options = "striped",
+                full_width = F) %>%
+ # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
+  add_footnote(c("table footnote")) 
+
+# LaTeX Table
+# kable(dt, format = "latex", booktabs = T, caption = "Demo Table") %>%
+#   kable_styling(latex_options = c("striped", "hold_position"),
+#                 full_width = F) %>%
+#   add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
+#   add_footnote(c("table footnote"))
+#   as_image(width = 8)
 ```
 
 
