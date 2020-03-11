@@ -58,8 +58,11 @@ table(cl_buf$buf_m, cl_buf$conscat)
 ########################
 cl2 <- cl_buf %>% st_as_sf() %>% st_transform(4326)
 
-library(tidycensus)
+library(tigris)
+library(sf)
 
+st <- states() %>% st_as_sf()
+  filter(st, STATEFP == '45')
 
 ## save ecoregion 1 (ie lowcountry) cons lands
 cl_buf %>% st_as_sf() %>% st_transform(4326) %>%
