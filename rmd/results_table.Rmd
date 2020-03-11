@@ -18,21 +18,39 @@ library(tidyverse)
 ## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
 ```
 
-## R Markdown
-
 ```{r, include = FALSE}
 # define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
+# df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
+#   select(-count) %>%
+#   group_by(conscat) %>%
+#   spread(state, acres) %>%
+#   rename(Data.Source = source, Georgia = GA, South.Carolina = SC)
+
 # df <- read.csv(file.path(datadir, 'cabz_data.csv'))
-df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv')) %>%
-  select(-count) %>%
-  tidyr::spread(state,acres)
+df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
+  rename(area = acres) %>%
+  mutate(area = round(area * 0.0015625)) %>%
+  mutate(GA.Pvt = ifelse(conscat == 'Private' & state == 'GA', area, NA),
+         GA.Pub = ifelse(conscat == 'Public' & state == 'GA', area, NA),
+         SC.Pvt = ifelse(conscat == 'Private' & state == 'SC', area, NA),
+         SC.Pub = ifelse(conscat == 'Public' & state == 'SC', area, NA)) %>%
+  select(-count, -area, -state, -conscat) %>%
+  mutate(source = as.character(source)) %>%
+  mutate(source = if_else(source == 'nced', 'NCED', 
+                          if_else(source == 'padus', 'PAD-US',
+                                  if_else(source == 'tnc', 'SC-TNC', NULL)))) %>%
+  group_by(source) %>%
+  summarise(GA.Pvt = sum(GA.Pvt, na.rm=T),
+    SC.Pvt = sum(SC.Pvt, na.rm=T),
+    GA.Pub = sum(GA.Pub, na.rm=T),
+    SC.Pub = sum(SC.Pub, na.rm=T))
 ```
 
-```{r, include = TRUE}
+```{r, include = TRUE, echo=FALSE}
 
-dt <- mtcars[1:5, 1:4]
+# dt <- mtcars[1:5, 1:4]
 
 # HTML table
 # kable(df, format = "html", caption = "Demo Table") %>%
@@ -42,11 +60,12 @@ dt <- mtcars[1:5, 1:4]
 #   add_footnote(c("table footnote")) 
 
 # LaTeX Table
-kable(df, format = "latex", booktabs = T, caption = "Demo Table") %>%
-  kable_styling(latex_options = c("striped", "hold_position"),
+kable(df, format = "latex", booktabs = T, caption = "Square Miles of Conservation Land",
+      col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
+  kable_styling(latex_options = "striped",
                 full_width = F) %>%
-  add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
-  add_footnote(c("table footnote")) %>%
+  add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
+  # add_footnote(c("table footnote")) %>%
   as_image()
 ```
 
