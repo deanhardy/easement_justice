@@ -7,6 +7,7 @@ rm(list=ls())
 
 library(tidyverse)
 library(sf)
+library(tigris)
 
 ## define variables
 BZONE = c(8000, 16000, 24000) ## distance (m) of beneficiary zones used in demographic analysis
@@ -60,16 +61,14 @@ cl_buf <- rbind(pvt_buf, pub_buf)
 
 table(cl_buf$buf_m, cl_buf$conscat)
 
-########################
+################################################
 ## working to add state to data
-########################
+################################################
 cl2 <- cl_buf %>% st_as_sf() %>% st_transform(4326)
 
-library(tigris)
-library(sf)
-
-st <- states() %>% st_as_sf()
-  filter(st, STATEFP == '45')
+st <- states() %>% st_as_sf() %>%
+  filter(STATEFP == 45 | STATEFP == 13) %>%
+  st_transform(4326)
 
 ## save ecoregion 1 (ie lowcountry) cons lands
 cl_buf %>% st_as_sf() %>% st_transform(4326) %>%
