@@ -23,7 +23,7 @@ st <- read.csv(file.path(datadir, 'st_data.csv')) %>%
   rename(tot_pop = total, statefp = GEOID) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 cabz <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
-  filter(buf_m == 320 & bzone_m == 16000) %>% 
+  filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat, statefp) %>%
