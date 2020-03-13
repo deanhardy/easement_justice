@@ -22,13 +22,6 @@ gm <- NULL # used in for loop for calculating gmedian
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
-## read in AOI
-AOI <- st_read(file.path(datadir, 'lc_tier1.shp'), stringsAsFactors = FALSE) %>%
-  st_transform(crs = alb)
-
-## need to breakdown AOI by state since that's the interest
-intAOI <- 
-
 ## import census data and filter to AOI states
 bg <- st_read(file.path(datadir, "bg_data.geojson"), stringsAsFactors = FALSE) %>%
   mutate(STATEFP = as.numeric(STATEFP), GEOID = as.numeric(GEOID)) %>%
@@ -38,13 +31,30 @@ bg <- st_read(file.path(datadir, "bg_data.geojson"), stringsAsFactors = FALSE) %
   filter(statefp != 'NA' & STATEFP %in% c(13, 45)) %>%
   st_transform(crs = alb)
 
+## read in AOI
+AOI <- st_read(file.path(datadir, 'lc_tier1.shp'), stringsAsFactors = FALSE) %>%
+  st_transform(crs = alb)
+
+################################################
+## working to add create int of AOI and states
+################################################
+library(tigris)
+
+st <- states() %>% st_as_sf() %>%
+  filter(STATEFP == 45 | STATEFP == 13) %>%
+  st_transform(alb) %>%
+  select(STATEFP, geometry)
+
+intAOI <- st_intersection(st, AOI) 
+
+
 ###################################################
 ## apply proportional area adjustment to variables
 ## to assess count within AOI
 ###################################################
 
 ## define intersection between block groups and AOI
-int <- as_tibble(st_intersection(AOI, bg))
+int <- as_tibble(st_intersection(intAOI, bg))
 
 ## proportional area adjustment/allocation method
 percBGinAOI <- int %>%
