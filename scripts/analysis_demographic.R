@@ -52,7 +52,8 @@ for(i in BENZ) {
 
 cabz <- cabz %>% st_as_sf() ## re-spatialize
 
-cabz <- filter(cabz, !(cabz$bzone_m == 8000 & cabz$buf_m %in% c(80,160))) ## filter redundancies
+cabz <- filter(cabz, !(cabz$bzone_m == 8000 & cabz$buf_m %in% c(80,160))) %>% 
+  rename(statefp = STATEFP) ## filter redundancies 
 
 table(cabz$bzone_m, cabz$buf_m) ## check results
 
@@ -99,16 +100,19 @@ bz_geog <- percBGinBZ %>%
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
-            sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m),
-            statefp = round(mean(statefp)), 0) %>%
+            sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
   merge(cons, by = 'rowid') %>%
-  dplyr::select(statefp, rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
+  dplyr::select(rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
                 platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
+cabz2 <- cabz %>% select(rowid, statefp) 
+st_geometry(cabz2) <- NULL
+bz_geog2 <- merge(bz_geog, cabz2)
+  
 # density plot
 # ggplot(bz_geog, aes(x = pwhite, group = conscat)) +
 #   geom_density(aes(color = conscat)) +
@@ -212,7 +216,7 @@ emed <- bg2 %>%
   mutate(emedhhinc = round(emedhhinc, 0))
 
 ## merge emedian hh income with other demographic data
-df <- bz_geog %>% 
+df <- bz_geog2 %>% 
   merge(emed, by = "rowid") %>%
   st_transform(4326) 
 # filter(state %in% c('GA', 'SC'))

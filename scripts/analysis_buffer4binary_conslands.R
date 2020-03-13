@@ -8,6 +8,7 @@ rm(list=ls())
 library(tidyverse)
 library(sf)
 library(tigris)
+library(tmap)
 
 ## define variables
 BZONE = c(8000, 16000, 24000) ## distance (m) of beneficiary zones used in demographic analysis
@@ -64,14 +65,30 @@ table(cl_buf$buf_m, cl_buf$conscat)
 ################################################
 ## working to add state to data
 ################################################
-cl2 <- cl_buf %>% st_as_sf() %>% st_transform(4326)
-
 st <- states() %>% st_as_sf() %>%
   filter(STATEFP == 45 | STATEFP == 13) %>%
-  st_transform(4326)
+  st_transform(4326) %>%
+  select(STATEFP, geometry)
+
+cl2 <- cl_buf %>% st_as_sf() %>%
+  mutate(id = seq(1:nrow(cl_buf)))
+
+cp <- st_centroid(cl2) %>% st_transform(4326)
+
+int <- st_intersection(st, cp) %>%
+  select(STATEFP, id)
+
+st_geometry(int) <- NULL
+
+cl_buf2 <- merge(cl2, int, all = TRUE)
+  
+tm_shape(st) + 
+  tm_polygons() + 
+tm_shape(cl2) + 
+  tm_polygons()
 
 ## save ecoregion 1 (ie lowcountry) cons lands
-cl_buf %>% st_as_sf() %>% st_transform(4326) %>%
+cl_buf2 %>% st_as_sf() %>% st_transform(4326) %>%
   st_write(file.path(datadir, 'conslands_er1_bufs.geojson'), delete_dsn=TRUE)
 
 #########################
