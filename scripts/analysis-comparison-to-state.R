@@ -31,19 +31,28 @@ cabz <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
             propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   as.data.frame()
 
+lc <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
+  rename(medhhinc = emedhhinc) %>%
+  mutate(cat = 'Lowcountry') %>%
+  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
+
 df <- rbind(st, cabz)
 
-df %>%
+df2 <- rbind(df, lc)
+
+df2 %>%
   as.data.table() %>%
-  select(tot_pop:emedhhinc) %>%
-  select(-pland, -pblack, -pother, -platinx) %>%
+  select(cat:medhhinc) %>%
+  select(-pblack, -pother, -platinx) %>%
   rename(., 
-         'Area (km^2)' = sqkm_aoi.x,
+         'Region' = cat, 
+         'State' = statefp,
+         #'Area (km^2)' = sqkm_aoi.x,
          'Total Population' = tot_pop, 
-         'Population Density (km^2)' = popden, 
+         #'Population Density (km^2)' = popden, 
          'White (%)' = pwhite,
          'People of Color (%)' = propPOC,
-         'Housing Units (#)' = hu,
-         'Mean Household Income ($)' = mnhhinc,
-         'Estimated Median Household Income ($)' = emedhhinc) %>%
+         #'Housing Units (#)' = hu,
+         #'Mean Household Income ($)' = mnhhinc,
+         'Estimated Median Household Income ($)' = medhhinc) %>%
   formattable()

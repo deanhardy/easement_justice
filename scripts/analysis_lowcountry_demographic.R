@@ -192,6 +192,9 @@ df <- AOI_geog %>%
   merge(emed, by = "statefp") %>%
   st_transform(4326) 
 
+library(formattable)
+formattable(df)
+
 ## export ONLY attribute data
 df %>%
   st_set_geometry(NULL) %>%
