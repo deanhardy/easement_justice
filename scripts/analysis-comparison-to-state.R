@@ -19,9 +19,10 @@ st <- read.csv(file.path(datadir, 'st_data.csv')) %>%
   mutate(pwhite = white/total, pblack = black/total, platinx = latinx/total, 
          pother = (native_american+asian+hawaiian+other+multiracial)/total, 
          propPOC = (total-white)/total,
-         cat = NAME) %>%
+         cat = 'State') %>%
   rename(tot_pop = total, statefp = GEOID) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
+
 cabz <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
@@ -40,19 +41,32 @@ df <- rbind(st, cabz)
 
 df2 <- rbind(df, lc)
 
-df2 %>%
+df3 <- df2 %>%
   as.data.table() %>%
   select(cat:medhhinc) %>%
-  select(-pblack, -pother, -platinx) %>%
-  rename(., 
-         'Region' = cat, 
-         'State' = statefp,
-         #'Area (km^2)' = sqkm_aoi.x,
-         'Total Population' = tot_pop, 
-         #'Population Density (km^2)' = popden, 
-         'White (%)' = pwhite,
-         'People of Color (%)' = propPOC,
-         #'Housing Units (#)' = hu,
-         #'Mean Household Income ($)' = mnhhinc,
-         'Estimated Median Household Income ($)' = medhhinc) %>%
-  formattable()
+  mutate(state = if_else(statefp == 45, 'South Carolina', 'Georgia'),
+         tot_pop = round(tot_pop, 0),
+         pwhite = round(pwhite, 2),
+         pblack = round(pblack, 2),
+         platinx = round(platinx, 2),
+         pother = round(pother, 2),
+         propPOC = round(propPOC, 2),
+         medhhinc = round(medhhinc, 0)) %>%
+  select(-statefp)
+# select(-pblack, -pother, -platinx) %>%
+  #' rename(., 
+  #'        'Region' = cat, 
+  #'        'State' = statefp,
+  #'        #'Area (km^2)' = sqkm_aoi.x,
+  #'        'Total Population' = tot_pop, 
+  #'        #'Population Density (km^2)' = popden, 
+  #'        'White (%)' = pwhite,
+  #'        'People of Color (%)' = propPOC,
+  #'        #'Housing Units (#)' = hu,
+  #'        #'Mean Household Income ($)' = mnhhinc,
+  #'        'Estimated Median Household Income ($)' = medhhinc) %>%
+  # spread(statefp, cat) %>%
+  # formattable()
+df3
+
+write.csv(df3, file.path(datadir, 'state-comparison.csv'))
