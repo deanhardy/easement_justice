@@ -1,3 +1,8 @@
+#####################################
+## script analyses demographics of an self-defined region based on previously downloaded census data
+## Author: Dean Hardy
+#####################################
+
 rm(list=ls())
 
 library(tidyverse)
@@ -9,111 +14,81 @@ options(tigris_use_cache = TRUE)
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-BENZ = c(8000, 16000, 24000) ## beneficiary zone distance
-BUFP = c(0.005, 0.01, 0.02) ## cons lands buffer distance proportion of BENZ
 
 YR <- 2016
-ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
+ST <- c('GA', 'SC')
 gm <- NULL # used in for loop for calculating gmedian
-
 
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
-##############################################################
-## data import
-##############################################################
-cons <- st_read(file.path(datadir, 'conslands_er1_bufs.geojson')) %>%
-  rowid_to_column() %>%
-  st_transform(crs = alb)
-
-## import census data
+## import census data and filter to AOI states
 bg <- st_read(file.path(datadir, "bg_data.geojson"), stringsAsFactors = FALSE) %>%
   mutate(STATEFP = as.numeric(STATEFP), GEOID = as.numeric(GEOID)) %>%
   mutate(statefp = ifelse(STATEFP == 37, 45,
                           ifelse(STATEFP == 12, 13, 
                                  ifelse(STATEFP == 1, 13, STATEFP))))%>%
-  filter(statefp != 'NA') %>%
+  filter(statefp != 'NA' & STATEFP %in% c(13, 45)) %>%
   st_transform(crs = alb)
 
-## for each buffered conservation reserve create a beneficiary zone (BZONE) around it
-# for demographic analysis
-cabz <- NULL ## Conservation Area Beneficiary Zone
-for(i in BENZ) {
-  for(j in BUFP) {
-   OUT <- cons %>%
-     filter(cons$buf_m == i * j) %>%
-     st_buffer(., dist = i) %>%
-     data.frame() %>%
-     mutate(bzone_m = i, sqkm_bz = as.numeric(st_area(geometry) / 1e6))
-   cabz <- rbind(OUT, cabz)
-  }
-}
+## read in AOI
+AOI <- st_read(file.path(datadir, 'lc_tier1.shp'), stringsAsFactors = FALSE) %>%
+  st_transform(crs = alb)
 
-cabz <- cabz %>% st_as_sf() ## re-spatialize
+################################################
+## working to add create int of AOI and states
+################################################
+library(tigris)
 
-cabz <- filter(cabz, !(cabz$bzone_m == 8000 & cabz$buf_m %in% c(80,160))) ## filter redundancies
+st <- states() %>% st_as_sf() %>%
+  filter(STATEFP == 45 | STATEFP == 13) %>%
+  st_transform(alb) %>%
+  select(STATEFP, geometry)
 
-table(cabz$bzone_m, cabz$buf_m) ## check results
-
-## export centroids of cabz
-st_centroid(cabz) %>%
-  st_transform(4326) %>%
-  select(rowid) %>%
-  st_write(file.path(datadir, 'cabz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
-
+intAOI <- st_intersection(st, AOI) 
 
 
 ###################################################
 ## apply proportional area adjustment to variables
-## to assess count within buffer zones
+## to assess count within AOI
 ###################################################
 
-## define intersection between cons area ben zones and block groups
-int <- as_tibble(st_intersection(cabz, bg))
+## define intersection between block groups and AOI
+int <- as_tibble(st_intersection(intAOI, bg))
 
 ## proportional area adjustment/allocation method
-percBGinBZ <- int %>%
-  mutate(sqkm_bginbz = as.numeric(st_area(geometry) / 1e6)) %>%
-  mutate(perc_bginbz = (sqkm_bginbz/sqkm_bg), sqkm_land = ALAND/ 1e6)
+percBGinAOI <- int %>%
+  mutate(sqkm_bginAOI = as.numeric(st_area(geometry) / 1e6)) %>%
+  mutate(perc_bginAOI = (sqkm_bginAOI/sqkm_bg), sqkm_land = ALAND/ 1e6)
 
-## save percBGinBUF data to use in median HH income estimation (see below)
-bg_for_emed <- percBGinBZ %>%
+## save percBGinAOI data to use in median HH income estimation (see below)
+bg_for_emed <- percBGinAOI %>%
   data.frame() %>%
   mutate(GEOID = as.character(GEOID)) %>%
-  select(rowid, GEOID, perc_bginbz) %>%
-  rename(BZID = rowid)
+  select(statefp, GEOID, perc_bginAOI)
 
 ## demographic analysis of cons area ben zones
-bz_geog <- percBGinBZ %>%
-  mutate(tot_pop = total * perc_bginbz,
-         white = white * perc_bginbz, 
-         black = black * perc_bginbz,
-         other = (native_american+asian+hawaiian+other+multiracial) * perc_bginbz,
-         #other = multiracial * perc_bginbz,
-         latinx = latinx * perc_bginbz,
-         hu = hu * perc_bginbz,
-         sqkm_land = sqkm_land * perc_bginbz) %>%
+AOI_geog <- percBGinAOI %>%
+  mutate(tot_pop = total * perc_bginAOI,
+         white = white * perc_bginAOI, 
+         black = black * perc_bginAOI,
+         other = (native_american+asian+hawaiian+other+multiracial) * perc_bginAOI,
+         latinx = latinx * perc_bginAOI,
+         hu = hu * perc_bginAOI,
+         sqkm_land = sqkm_land * perc_bginAOI) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
-  group_by(rowid) %>% ## regroups to cons areas after demo analysis on intersections
+  group_by(statefp) %>% ## regroups to cons areas after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
-            sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m),
-            statefp = round(mean(statefp)), 0) %>%
+            sqkm_land = sum(sqkm_land)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
-  merge(cons, by = 'rowid') %>%
-  dplyr::select(statefp, rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
+         mnhhinc = round(agghhinc/hu, 0)) %>%
+  merge(AOI) %>%
+  dplyr::select(statefp, tot_pop, popden, pwhite, white, pblack, black, pother, other, 
                 platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
-
-# density plot
-# ggplot(bz_geog, aes(x = pwhite, group = conscat)) +
-#   geom_density(aes(color = conscat)) +
-#   theme_bw()
-
 
 
 #########################################################
@@ -199,39 +174,29 @@ GMedian <- function(frequencies, intervals, sep = NULL, trim = NULL) {
 }
 
 bg2 <- gm %>%
-  left_join(bg_for_emed, by = "GEOID") %>%
-  filter(perc_bginbz != 'NA') %>%
-  mutate(eHH = households * perc_bginbz) %>%
-  group_by(BZID, variable) %>%
+  mutate(statefp = as.numeric(str_extract(GEOID, "^.{2}"))) %>%
+  left_join(bg_for_emed, by = "statefp") %>%
+  filter(perc_bginAOI != 'NA') %>%
+  mutate(eHH = households * perc_bginAOI) %>%
+  group_by(statefp, variable) %>%
   summarise(interval = interval[[1]], eHH = sum(eHH), households = sum(households)) %>%
   summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = 'cut'))
 
 ## import gmedian estimates for hh income
 emed <- bg2 %>%
-  rename(rowid = BZID, emedhhinc = gmedian) %>%
+  rename(emedhhinc = gmedian) %>%
   mutate(emedhhinc = round(emedhhinc, 0))
 
 ## merge emedian hh income with other demographic data
-df <- bz_geog %>% 
-  merge(emed, by = "rowid") %>%
+df <- AOI_geog %>% 
+  merge(emed, by = "statefp") %>%
   st_transform(4326) 
-# filter(state %in% c('GA', 'SC'))
 
-# density plot
-ggplot(df, aes(x = emedhhinc, group = conscat)) +
-  geom_density(aes(color = conscat)) +
-  theme_bw()
-
-##############################
-## export data
-##############################
-
-## export cabz as polygons
-df %>% st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
+library(formattable)
+formattable(df)
 
 ## export ONLY attribute data
 df %>%
   st_set_geometry(NULL) %>%
-  write.csv(file.path(datadir, 'cabz_data.csv'), row.names = FALSE)
-
+  write.csv(file.path(datadir, 'lowcountry-by-state_data.csv'), row.names = FALSE)
 
