@@ -8,12 +8,15 @@ source("~/cons_land_dir")
 
 source( './scripts/easey_funs.R')
 
-ease <- read.csv(file='./data/cons_data.csv', stringsAsFactors = F)
+#ease <- read.csv(file='./data/cons_data.csv', stringsAsFactors = F)
+ease <- read.csv('/home/nuse/helping_folks/Dean_easements/outside_git/cabz_data.csv')
+
+
 
 ease$emedhhinc.sc <- ease$emedhhinc/1e4
 ease$new.popden <- with(ease, tot_pop/sqkm_buf)
 #ease$new.popden.sc <- scale(ease$new.popden)
-ease$area_km2 <- ease$acres*0.00404686
+#ease$area_km2 <- ease$acres*0.00404686
 
 ###  For now, filter to Low Country: ecoreg = 1. (2 includes Okefenokee; 3 is whole coastal plain)
 ###  based on talking w/ Dean and Levi, 14 Sep 2018.
