@@ -4,10 +4,22 @@ library(leaflet)
 library(leaflet.extras)
 library(sf)
 
-df <- st_read("data/bz_data.geojson")
-bf <- st_read('data/ben_zones.geojson')
+#define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/cons_lands')
 
-pal <- colorFactor(rainbow(3), df$type)
+# df2 <- st_read(file.path(datadir, 'cons_lands.geojson'))
+# leaflet() %>%
+#   addTiles(group = "Open Street Map") %>%
+#   addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
+#   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+#   setView(lng = -81, lat = 33, zoom = 7) %>%
+#   addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
+#   addPolygons(data = df2)
+
+df <- st_read(file.path(datadir, 'bz_data.geojson'))
+bz <- st_read(file.path(datadir, 'ben_zones.geojson'))
+
+pal <- colorFactor(rainbow(3), df$conscat)
 
 m <- leaflet() %>%
   addTiles(group = "Open Street Map") %>%
@@ -18,7 +30,7 @@ m <- leaflet() %>%
   addPolygons(data = df,
               popup = paste("Site Name:", df$sitename, "<br>",
                             "Management:", df$management, "<br>",
-                            "Conservation Area (Acres):", round(df$acres, 0), "<br>",
+                            #"Conservation Area (Acres):", round(df$acres, 0), "<br>",
                             "Beneficiary Zone (KM^2):", round(df$sqkm_buf, 0), "<br>",
                             "Land (%):", 100*df$pland, "<br>",
                             "People of Color (%):", 100*df$propPOC, "<br>",
@@ -29,13 +41,14 @@ m <- leaflet() %>%
                             "Estimated Median HH Income (US$):", round(df$emedhhinc, 0), "<br>",
                             "Estimated Mean HH Income (US$):", df$mnhhinc, "<br>",
                             "GAP Status:", df$gap, "<br>",
-                            "Purpose:", df$purpose),
+                            "Purpose:", df$purpose, "<br>",
+                            "Data Source:", df$source),
               group = "Conservation Areas",
-              fillColor = ~pal(df$type),
+              fillColor = ~pal(df$conscat),
               fillOpacity = 0.5,
               weight = 1) %>%
-  addPolylines(data = bf, 
-               color = ~pal(bf$type),
+  addPolylines(data = bz, 
+               color = ~pal(bz$conscat),
                weight = 1, 
                group = "Beneficiary Zones") %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
@@ -43,7 +56,7 @@ m <- leaflet() %>%
       options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
             pal = pal,
-            values = df$type,
+            values = df$conscat,
             title = "Conservation Area") %>%
   addScaleBar("bottomright")
 m
@@ -51,7 +64,7 @@ m
 ## exporting as html file for exploration
 library(htmlwidgets)
 saveWidget(m, 
-           file="C:/Users/dhardy/Dropbox/sesync/manuscripts/unpublished/easement_justice/R/easement_justice/docs/lowcountry_conservation.html",
+           file="/Users/dhardy/Dropbox/r_data/cons_lands/lowcountry_conservation.html",
            title = "Lowcountry Conservation Areas")
 
 

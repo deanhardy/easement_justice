@@ -1,23 +1,113 @@
 ---
-title: "results_table"
-output:
-  html_document: default
-  pdf_document: default
+title: ""
+output: 
+  pdf_document:
+    fig_caption: false
+    keep_tex: yes
+classoption: landscape
+# fontfamily: mathpazo
+# fontsize: 16pt
+# header-includes:
+#   - \usepackage{titling}
+#   - \pretitle{\begin{flushleft}}
+#   - \posttitle{\end{flushleft}}
 ---
 
 ```{r setup, include=FALSE}
+
+rm(list=ls())
 knitr::opts_chunk$set(echo = TRUE)
-library(stargazer)
+library(magick)
+library(webshot)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+
+# webshot::install_phantomjs()
+## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
+```
+# Lowcountry EJ Results
+## Conservation Land by Data Source
+### Table 1 Square Miles of Conservation Land
+```{r, include = TRUE, echo=FALSE}
+
+# define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
+df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
+  rename(area = acres) %>%
+  mutate(area = round(area * 0.0015625)) %>%
+  mutate(GA.Pvt = ifelse(conscat == 'Private' & state == 'GA', area, NA),
+         GA.Pub = ifelse(conscat == 'Public' & state == 'GA', area, NA),
+         SC.Pvt = ifelse(conscat == 'Private' & state == 'SC', area, NA),
+         SC.Pub = ifelse(conscat == 'Public' & state == 'SC', area, NA)) %>%
+  select(-count, -area, -state, -conscat) %>%
+  mutate(source = as.character(source)) %>%
+  mutate(source = if_else(source == 'nced', 'NCED', 
+                          if_else(source == 'padus', 'PAD-US',
+                                  if_else(source == 'tnc', 'SC-TNC', NULL)))) %>%
+  group_by(source) %>%
+  summarise(GA.Pvt = sum(GA.Pvt, na.rm=T),
+    SC.Pvt = sum(SC.Pvt, na.rm=T),
+    GA.Pub = sum(GA.Pub, na.rm=T),
+    SC.Pub = sum(SC.Pub, na.rm=T))
+# HTML table
+# kable(df, format = "html", caption = "Demo Table") %>%
+#   kable_styling(bootstrap_options = "striped",
+#                 full_width = F) %>%
+#  # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
+#   add_footnote(c("table footnote")) 
+
+# LaTeX Table
+kable(df, format = "latex", booktabs = T, 
+      caption = NULL,
+      col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
+  kable_styling(latex_options = "striped",
+                full_width = F) %>%
+  add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
+  # add_footnote(c("table footnote")) %>%
+  as_image()
 ```
 
-## R Markdown
+## Demographic Comparison by Region
+### Table 2 South Carolina
+```{r include=TRUE, echo=FALSE}
+# define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
-```{r}
-df <- read.csv('data/bz_data.csv')
+df2 <- read.csv(file.path(datadir, 'state-comparison.csv'))[-1] 
+
+# LaTeX Table
+df2 %>%
+  filter(state == 'South Carolina') %>%
+  select(-state) %>%
+  kable(format = "latex", booktabs = T, caption = NULL,
+         col.names = c('Region^a', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income')) %>%
+  kable_styling(latex_options = "scale_down",
+                full_width = NULL) %>%
+  # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
+  add_footnote(c("State level included just for us; will not be included in pub")) %>%
+  as_image(width = 9)
 ```
 
-```{r results = 'asis'}
-stargazer(glm((black/tot_pop) ~ type, data = df), type = 'html', digits = 0)
+### Table 3 Georgia
+```{r include=TRUE, echo=FALSE}
+
+# define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
+df2 <- read.csv(file.path(datadir, 'state-comparison.csv'))[-1] 
+
+# LaTeX Table
+df2 %>%
+  filter(state == 'Georgia') %>%
+  select(-state) %>%
+  kable(format = "latex", booktabs = T, caption = NULL, 
+        align = 'lrrrrrrr',
+         col.names = c('Region^a', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income')) %>%
+  kable_styling(latex_options = "scale_down",
+                full_width = NULL) %>%
+  # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
+  add_footnote(c("State level included just for us; will not be included in pub")) %>%
+  as_image(width = 9)
 ```
-
-

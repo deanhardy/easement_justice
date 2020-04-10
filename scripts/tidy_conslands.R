@@ -1,15 +1,28 @@
+################################################
+## PURPOSE: This script wrangles conservation land data from three sources 
+##     (PADUS, NCED, & SC-TNC (proprietary)) into one dataframe
+## BY: Dean Hardy
+################################################
+
 rm(list=ls())
 
 library(tidyverse)
+library(lwgeom)
 library(sf)
 library(tmap)
+options("scipen"=100, "digits"=4)
+# options("scipen"=0, "digits"=7) ## default
 
 ## define variables
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
 #define data directory
-datadir <- file.path('C:/Users/Juncus/Dropbox/r_data/cons_lands')
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
+lc_tier1 <- st_read(file.path(datadir, "lc_tier1.shp")) %>%
+  st_transform(crs = alb) %>%
+  mutate(area = st_area(geometry)*3.86102e-7)
 
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## assuming NAs and unknowns are PRIVATE (need to revise later)
@@ -38,11 +51,16 @@ tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
                                                       ifelse(owntype == 'Regional Agency', 'DIST', 
                                                              ifelse(owntype == 'NGO', 'NGO', 'UNK')))))))) %>%
   mutate(access = ifelse(access %in% c('Closed', 'No', 'NO'),'XA', 
-                          ifelse(access %in% c(NA, 363.138382858769), 'UK', 
-                                 ifelse(access %in% c('Restricted', 'Limited', 'Limited Access'), 'RA',
-                                        ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', access))))) %>%
+                         ifelse(access %in% c(NA, 363.138382858769), 'UK', 
+                                ifelse(access %in% c('Restricted', 'Limited', 'Limited Access'), 'RA',
+                                       ifelse(access %in% c('Open', 'Public Access', 'Yes'), 'OA', access))))) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
                           ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA)))
+
+## convert to raster then back to polygon
+# r <- raster(tnc, res = 10)
+# tnc_r <- fasterize(tnc, r, field = 'id')
+# tnc_p <- rasterToPolygons(tnc_r)
 
 ## import NCED data for coastal plain (lc tier 3) region in SC & GA
 ## assuming all unknowns are PUBLIC (need to manually edit later)
@@ -52,10 +70,10 @@ nced <- st_read(file.path(datadir, "nced.shp")) %>%
   dplyr::select(id, owntype, eholdtype, esmthldr, sitename, pubaccess, state, 
                 acres, gapcat, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
   rename(management = esmthldr, 
-        gap = gapcat,
-        access = pubaccess,
-        orig_id = ORIG_FID,
-        mgmttype = eholdtype)%>%
+         gap = gapcat,
+         access = pubaccess,
+         orig_id = ORIG_FID,
+         mgmttype = eholdtype) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
@@ -78,80 +96,26 @@ padus <- st_read(file.path(datadir, "padus.shp")) %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT', 'UNK'), 'Public',
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA)))
 
-dat <- rbind(nced, padus, tnc)
+## combine tidy source data and make geometry valid
+dat <- rbind(nced, padus, tnc) %>%
+  st_make_valid()
+
+## summary descriptive stats
+df_sum <- dat %>%
+  st_drop_geometry() %>%
+  filter(ecorg_tier == 1 & state %in% c('GA', 'SC')) %>%
+  mutate(management = as.character(management)) %>%
+  group_by(source, conscat, state) %>%
+  dplyr::summarise(count = n(), acres = sum(round(acres,0)))
+df_sum
+
+write.csv(df_sum, file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 
 ## exploring the data
-table(dat$source, dat$conscat)
+dat2<- dat %>% filter(ecorg_tier == 1) 
+table(dat2$source, dat2$conscat)
+1# qtm(dat, fill = 'conscat')
 
-
-# st_write(dat, file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')
-# st_write(dat, file.path(datadir, 'tnc_rc.shp'), driver = 'ESRI Shapefile')
-# st_write(dat, file.path(datadir, 'nced_rc.shp'), driver = 'ESRI Shapefile')
-# st_write(dat, file.path(datadir, 'padus_rc.shp'), driver = 'ESRI Shapefile')
-
-options("scipen"=100, "digits"=4)
-# options("scipen"=0, "digits"=7) ## default
-
-## examine intersection of NCED & TNC data sets
-ncedxtnc <- st_intersection(nced, tnc) %>%
-  mutate(acres_nced_tnc = acres - acres.1,
-         acres_in_tnc = as.numeric(st_area(geometry) * 0.00024710538)) %>%
-  mutate(prop_in_tnc = acres_in_tnc/acres)
-hist(ncedxtnc$prop_in_tnc)
-
-## select observations with high overlap & filter original data to delete overlapping observations
-# t <- filter(ncedxtnc, prop_in_tnc >=0.9 & abs(acres_nced_tnc) < 1)
-tnc_del <- filter(ncedxtnc, prop_in_tnc >= 0.8)
-tnc2 <- tnc %>% filter(!(id %in% tnc_del$id.1))
-
-## examine intersection of NCED and PADUS data sets
-ncedxpadus <- st_intersection(nced, padus) %>%
-  mutate(acres_nced_padus = acres - acres.1,
-         acres_in_padus = as.numeric(st_area(geometry) * 0.00024710538)) %>%
-  mutate(prop_in_padus = acres_in_padus/acres)
-hist(ncedxpadus$prop_in_padus)
-
-## select observations with high overlap & filter original data to delete overlapping observations
-padus_del <- filter(ncedxpadus, prop_in_padus >= 0.8)
-padus2 <- padus %>% filter(!(id %in% padus_del$id.1))
-
-## examine intersection of PADUS & TNC data sets
-padusxtnc <- st_intersection(padus2, tnc2) %>%
-  mutate(acres_padus_tnc = acres - acres.1,
-         acres_in_tnc = as.numeric(st_area(geometry) * 0.00024710538)) %>%
-  mutate(prop_in_tnc = acres_in_tnc/acres)
-hist(padusxtnc$prop_in_tnc)
-
-## select observations with high overlap & filter original data to delete overlapping observations
-tnc2_del <- filter(padusxtnc, prop_in_tnc >= 0.8)
-tnc3 <- tnc2 %>% filter(!(id %in% tnc2_del$id.1))
-
-
-## combine filtered data
-dat2 <- rbind(nced, padus2, tnc3)
-
-## export cons lands data
-dat2 %>% st_transform(crs = 4326) %>%
-st_write(file.path(datadir, 'cons_lands.geojson'), driver = 'geojson', delete_dsn = TRUE)
-
-
-
-
-## filtering the data sets
-# tnc2 <- filter(tnc, conscat == 'Private')
-# nced2 <- filter(nced, conscat == 'Private')
-# padus2 <- filter(padus, conscat == 'Public')
-# dat2 <- rbind(nced2, padus2, tnc2)
-# 
-# dat3 <- dat2 %>% filter(ecorg_tier == 1)
-# table(dat3$source, dat3$conscat)
-
-# ggplot() + 
-#   geom_sf(data = tnc, aes(fill = source), lwd = 0, alpha = 0.3, inherit.aes = TRUE) + 
-#   geom_sf(data = padus, aes(color = NULL, fill = source), lwd = 0, alpha = 0.3, inherit.aes = FALSE) + 
-#   geom_sf(data = nced, aes(fill = source), lwd = 0, alpha = 0.3, inherit.aes = FALSE)
-
-  
-    
-
-
+## export just lowcountry data
+dat %>% filter(ecorg_tier == 1) %>%
+  st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile')

@@ -1,0 +1,57 @@
+##  Make a 3d `mango` with the easement data.
+##
+##
+##
+##  08 aug 2019
+######################################
+
+#define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+ease <- read.csv(file.path(datadir, 'cabz_data.csv'))
+
+##################################################################
+
+source('scripts/hull_fun.r')
+
+##################################################################
+
+######  About function `hull.fun()`:  #########
+
+###  Requires: rgl, geometry
+
+##  It plots 3-variate data in 3d with package {rgl}, showing the groups in [conscat], "Public" and "Private" -- it also shows convex hulls for each group corresponding to a percentile of distance from the group median, of your choosing (95% by default).  Each variable is standardized before any calculations are made, or plots produced.
+
+##  hull.fun (b, vars, data = ease, cut = 0.95, col.v = c(pub = "blue", 
+##      pri = "olivedrab1"), bg.col = "gray70", centroid = "median", 
+##      plot = T) 
+
+
+###  Arguments:
+##  b	--	value of [buf_m] to use
+##  vars	--	variables in data to examine
+##  data	--	"ease", most likely
+##  cut		--	the quantile of distance-to-the-median to use, in culling points in a group, before calculating the convex hull
+##  col.v	--	colors to use for the groups
+##  bg.col	--	background color of plotting 'space'
+##  centroid	--	either "median" or "mean"
+##  plot	--	should plot be produced?
+
+##  Value:
+##  
+##  A list:
+##  $vol	--	the absolute volumes of three hulls: that of each group, and their intersection ("ovrlp")
+##  $ovrlp	--	the volume of the intersection hull "ovrlp" expressed as a percentage of the volumes of each group hull  
+
+
+###  Examples:
+
+b <- 320
+terms <- c("propPOC", "emedhhinc", "popden")
+
+###  the 95% convex hulls, by default:
+hull.fun(b = b, vars = terms)
+
+###  plot the 75% convex hulls:
+hull.fun(b = b, vars = terms, cut = 0.75)
+
+
