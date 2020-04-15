@@ -18,7 +18,7 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 bg <- NULL
 st <- NULL
-YR <- 2016
+YR <- 2018
 ST <- c('AL', 'GA', 'FL', 'SC', 'NC')
 var = c(white = "B03002_003E", black = "B03002_004E",
         native_american = "B03002_005E", asian = "B03002_006E",
