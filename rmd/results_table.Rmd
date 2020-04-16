@@ -62,8 +62,7 @@ df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
 kable(df, format = "latex", booktabs = T, 
       caption = NULL,
       col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
-  kable_styling(latex_options = "striped",
-                full_width = F) %>%
+  kable_styling(full_width = F) %>%
   add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
   # add_footnote(c("table footnote")) %>%
   as_image()
@@ -83,7 +82,7 @@ df2 %>%
   select(-state) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
          col.names = c('Region^a', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income')) %>%
-  kable_styling(latex_options = "scale_down",
+  kable_styling(latex_options = "scale_down", "striped",
                 full_width = NULL) %>%
   # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
   add_footnote(c("State level included just for us; will not be included in pub")) %>%
@@ -105,7 +104,7 @@ df2 %>%
   kable(format = "latex", booktabs = T, caption = NULL, 
         align = 'lrrrrrrr',
          col.names = c('Region^a', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income')) %>%
-  kable_styling(latex_options = "scale_down",
+  kable_styling(latex_options = "scale_down", "striped",
                 full_width = NULL) %>%
   # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
   add_footnote(c("State level included just for us; will not be included in pub")) %>%
