@@ -70,3 +70,4 @@ df3 <- df2 %>%
 df3
 
 write.csv(df3, file.path(datadir, 'state-comparison.csv'))
+

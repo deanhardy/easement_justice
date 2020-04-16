@@ -140,5 +140,6 @@ m
 ## exporting as html file for exploration
 library(htmlwidgets)
 saveWidget(m, 
-           file="/Users/dhardy/Dropbox/r_data/cons_lands/buffer_zones.html",
+           file="/Users/dhardy/Dropbox/r_data/easement-justice/buffer_zones.html",
            title = "Buffer Zones")
+

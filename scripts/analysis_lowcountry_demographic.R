@@ -15,7 +15,7 @@ options(tigris_use_cache = TRUE)
 utm <- 2150 ## NAD83 17N
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
 
-YR <- 2016
+YR <- 2018
 ST <- c('GA', 'SC')
 gm <- NULL # used in for loop for calculating gmedian
 
