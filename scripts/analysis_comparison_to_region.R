@@ -1,14 +1,16 @@
-################################################
-## PURPOSE: this script compares block group demographics aggregated to a study site
-## to state level demographics (census data downloaded elsewhere)
-## BY: Dean Hardy
-################################################
+## HEADER START ----------------------------------------------
+##
+## PURPOSE: this script compares block group demographics (data downloaded elsewhere) between AOIs.
+## In this case, between SC and GA state, lowcountry of SC and GA, and conservation area beneficiary zones (CABZ)
+##
+## Author: Dean Hardy
+##
+## HEADER END ------------------------------------------------
 
 rm(list=ls())
 
 library(tidyverse)
 library(data.table)
-library(formattable)
 
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
