@@ -1,10 +1,10 @@
-################################################
-## PURPOSE: This script wrangles conservation land data from three sources 
+## --------------------------------------------
+## PURPOSE: This script wrangles conservation reserve data from three sources 
 ##     (PADUS, NCED, & SC-TNC (proprietary)) into one dataframe
 ## Conservative Approach == Cleaning data by removing all public reserves from SC-TNC and NCED and all private reserves from PADUS 
 ##    as well as all non-GA reserves from NCED w/ hopes of eliminating replication
-## BY: Dean Hardy
-################################################
+## Author: Dr. Dean Hardy
+## --------------------------------------------
 
 rm(list=ls())
 

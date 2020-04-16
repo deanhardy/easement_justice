@@ -1,7 +1,6 @@
-#####################################
+# HEADER ##################################
 ## script analyses demographics of an self-defined region based on previously downloaded census data
 ## Author: Dean Hardy
-#####################################
 
 rm(list=ls())
 
@@ -35,9 +34,8 @@ bg <- st_read(file.path(datadir, "bg_data.geojson"), stringsAsFactors = FALSE) %
 AOI <- st_read(file.path(datadir, 'lc_tier1.shp'), stringsAsFactors = FALSE) %>%
   st_transform(crs = alb)
 
-################################################
-## working to add create int of AOI and states
-################################################
+### hint of AOI & states #############################################
+
 library(tigris)
 
 st <- states() %>% st_as_sf() %>%
@@ -48,10 +46,9 @@ st <- states() %>% st_as_sf() %>%
 intAOI <- st_intersection(st, AOI) 
 
 
-###################################################
-## apply proportional area adjustment to variables
+### proportional area adjustment to variables
 ## to assess count within AOI
-###################################################
+##################################################
 
 ## define intersection between block groups and AOI
 int <- as_tibble(st_intersection(intAOI, bg))
