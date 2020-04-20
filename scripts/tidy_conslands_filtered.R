@@ -121,9 +121,6 @@ dat2 <- dat %>%
   summarise(state = first(state), owntype = first(owntype), mgmttype = first(mgmttype), management = first(management), sitename = first(sitename),
             acres = sum(acres), gap = first(gap), purpose = first(purpose), ecorg_tier = first(ecorg_tier), source = first(source), conscat = first(conscat))
 
-qtm(dat, fill = 'conscat')
-qtm(dat2, fill = 'conscat')
-
 
 ## summary descriptive stats
 df_sum <- dat2 %>%

@@ -25,6 +25,7 @@ st <- read.csv(file.path(datadir, 'st_data.csv')) %>%
   rename(tot_pop = total, statefp = GEOID) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 
+## GA and SC reserve data by state
 cabz <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
@@ -34,7 +35,24 @@ cabz <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
             propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   as.data.frame()
 
+## GA and SC lowcountry data by state
 lc <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
+  rename(medhhinc = emedhhinc) %>%
+  mutate(cat = 'Lowcountry') %>%
+  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
+
+## combine GA and SC reserve data
+cabz_entire <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
+  filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
+  rename(cat = conscat, medhhinc = emedhhinc) %>%
+  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
+  group_by(cat) %>%
+  summarise(tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
+            propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
+  as.data.frame()
+
+## combine GA and SC lowcountry data
+lc_entire <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
   rename(medhhinc = emedhhinc) %>%
   mutate(cat = 'Lowcountry') %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
@@ -55,21 +73,8 @@ df3 <- df2 %>%
          propPOC = round(propPOC, 2),
          medhhinc = round(medhhinc, 0)) %>%
   select(-statefp)
-# select(-pblack, -pother, -platinx) %>%
-  #' rename(., 
-  #'        'Region' = cat, 
-  #'        'State' = statefp,
-  #'        #'Area (km^2)' = sqkm_aoi.x,
-  #'        'Total Population' = tot_pop, 
-  #'        #'Population Density (km^2)' = popden, 
-  #'        'White (%)' = pwhite,
-  #'        'People of Color (%)' = propPOC,
-  #'        #'Housing Units (#)' = hu,
-  #'        #'Mean Household Income ($)' = mnhhinc,
-  #'        'Estimated Median Household Income ($)' = medhhinc) %>%
-  # spread(statefp, cat) %>%
-  # formattable()
-df3
+
+view(df3)
 
 write.csv(df3, file.path(datadir, 'state-comparison.csv'))
 

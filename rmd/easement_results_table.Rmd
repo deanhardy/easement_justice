@@ -26,7 +26,7 @@ library(tidyverse)
 # webshot::install_phantomjs()
 ## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
 ```
-# Lowcountry EJ Results
+# Lowcountry EJ Results (UN-FILTERED)
 ## Conservation Land by Data Source
 ### Table 1 Square Miles of Conservation Land
 ```{r, include = TRUE, echo=FALSE}
@@ -47,7 +47,8 @@ df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
                           if_else(source == 'padus', 'PAD-US',
                                   if_else(source == 'tnc', 'SC-TNC', NULL)))) %>%
   group_by(source) %>%
-  summarise(GA.Pvt = sum(GA.Pvt, na.rm=T),
+  summarise(
+    GA.Pvt = sum(GA.Pvt, na.rm=T),
     SC.Pvt = sum(SC.Pvt, na.rm=T),
     GA.Pub = sum(GA.Pub, na.rm=T),
     SC.Pub = sum(SC.Pub, na.rm=T))
@@ -68,8 +69,49 @@ kable(df, format = "latex", booktabs = T,
   as_image()
 ```
 
+### Table 2 Number of Conservation Reserves
+```{r, include = TRUE, echo=FALSE}
+
+# define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
+df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
+  rename(area = acres) %>%
+  mutate(area = round(area * 0.0015625)) %>%
+  mutate(GA.PvtC = ifelse(conscat == 'Private' & state == 'GA', count, NA),
+         GA.PubC = ifelse(conscat == 'Public' & state == 'GA', count, NA),
+         SC.PvtC = ifelse(conscat == 'Private' & state == 'SC', count, NA),
+         SC.PubC = ifelse(conscat == 'Public' & state == 'SC', count, NA)) %>%
+  select(-count, -area, -state, -conscat) %>%
+  mutate(source = as.character(source)) %>%
+  mutate(source = if_else(source == 'nced', 'NCED', 
+                          if_else(source == 'padus', 'PAD-US',
+                                  if_else(source == 'tnc', 'SC-TNC', NULL)))) %>%
+  group_by(source) %>%
+  summarise(
+    GA.PvtC = sum(GA.PvtC, na.rm=T),
+    SC.PvtC = sum(SC.PvtC, na.rm=T),
+    GA.PubC = sum(GA.PubC, na.rm=T),
+    SC.PubC = sum(SC.PubC, na.rm=T))
+# HTML table
+# kable(df, format = "html", caption = "Demo Table") %>%
+#   kable_styling(bootstrap_options = "striped",
+#                 full_width = F) %>%
+#  # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
+#   add_footnote(c("table footnote")) 
+
+# LaTeX Table
+kable(df, format = "latex", booktabs = T, 
+      caption = NULL,
+      col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
+  kable_styling(full_width = F) %>%
+  add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
+  # add_footnote(c("table footnote")) %>%
+  as_image()
+```
+
 ## Demographic Comparison by Region
-### Table 2 South Carolina
+### Table 3 South Carolina
 ```{r include=TRUE, echo=FALSE}
 # define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
@@ -89,7 +131,7 @@ df2 %>%
   as_image(width = 9)
 ```
 
-### Table 3 Georgia
+### Table 4 Georgia
 ```{r include=TRUE, echo=FALSE}
 
 # define data directory

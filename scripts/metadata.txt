@@ -1,9 +1,16 @@
 Order in which to run scripts for re-analysis from scratch
 
-1. tidy_conslands.R OR tidy_conslands_conservativeapproach.R # depending on preference
-2. tidy_demographics.R # only if you want to update census data
-3. analysis_demographic_lowcountry.R # dependent on outputs from tidy_demographcs.R
-4. analysis_conslands_buffer4binary.R # dependent on output from tidy_conslands.R
-5. analysis_demographic_cabz.R # dependent on outputs from tidy_demographics.R AND analysis_conslands_buffer4binary.R
-6. analysis_comparison_to_region.R # dependent on outputs from analysis_demographic_cabz.R AND analysis_demographic_lowcountry.R & tidy_demographics.R
-7. then run RMD in r_projects folder if desired
+Demographics data prep
+0.1. tidy_demographics.R # only if you want to update census data
+
+Conservation reserves data prep
+1. tidy_conslands.R OR tidy_conslands_filtered.R # depending on preference
+2. analysis_conslands_buffer4binary.R # dependent on output from tidy_conslands.R
+
+Demographic analyses of CABZ and Lowcountry areas
+3. analysis_demographic_cabz.R # dependent on outputs from tidy_demographics.R AND analysis_conslands_buffer4binary.R
+4. analysis_demographic_lowcountry.R # dependent on outputs from tidy_demographcs.R
+
+Comparison of regions (state, lowcountry, CABZ)
+5. analysis_comparison_to_region.R # dependent on outputs from analysis_demographic_cabz.R AND analysis_demographic_lowcountry.R & tidy_demographics.R
+6. then run RMD in r_projects folder if desired

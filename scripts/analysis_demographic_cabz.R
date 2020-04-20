@@ -12,10 +12,6 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 BENZ = c(8000, 16000, 24000) ## beneficiary zone distance
 BUFP = c(0.005, 0.01, 0.02) ## cons lands buffer distance proportion of BENZ
 
-YR <- 2018
-ST <- c('GA', 'SC', 'AL', 'FL', 'NC')
-gm <- NULL # used in for loop for calculating gmedian
-
 
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
