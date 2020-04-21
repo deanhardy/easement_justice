@@ -81,7 +81,6 @@ nced <- st_read(file.path(datadir, "nced.shp")) %>%
                           ifelse(owntype %in% c('NGO', 'PVT'), 'Private', NA))) %>%
   filter(conscat == 'Private' & state == 'GA')
 
-
 ## import PAD-US data
 ## assuming unknowns are PUBLIC
 padus <- st_read(file.path(datadir, "padus.shp")) %>%
@@ -107,25 +106,23 @@ dat <- rbind(nced, padus, tnc) %>%
   st_make_valid() %>%
   filter(ecorg_tier == 1 & state %in% c('GA', 'SC') & !is.na(owntype))
 
-qtm(dat, fill = 'owntype')
+# qtm(dat, fill = 'owntype')
 
 ## explore data by mgmt and ownership
-table(dat$source, dat$mgmttype)
-table(dat$source, dat$owntype)
+# table(dat$source, dat$mgmttype)
+# table(dat$source, dat$owntype)
 
-## working on cleaning data further by conscat and state (related to breaking multipart polygon into separate ones)
+## reassembles single-part reserves in multi-part units (not spatially, but for descriptive stats)
 dat2 <- dat %>%
-  # filter(source == 'padus' & conscat == 'Public' | source == 'nced' & conscat == 'Private' & state == 'GA' | 
-  #          source == 'tnc' & conscat == 'Private' & state == 'SC') %>%
-  group_by(orig_id) %>%
-  summarise(state = first(state), owntype = first(owntype), mgmttype = first(mgmttype), management = first(management), sitename = first(sitename),
-            acres = sum(acres), gap = first(gap), purpose = first(purpose), ecorg_tier = first(ecorg_tier), source = first(source), conscat = first(conscat))
-
+  group_by(source, orig_id) %>%
+  summarise(state = first(state), owntype = first(owntype), mgmttype = first(mgmttype),
+            management = first(management), sitename = first(sitename),
+            acres = sum(acres), gap = first(gap), purpose = first(purpose),
+            ecorg_tier = first(ecorg_tier), conscat = first(conscat))
 
 ## summary descriptive stats
 df_sum <- dat2 %>%
   st_drop_geometry() %>%
-  mutate(management = as.character(management)) %>%
   group_by(source, conscat, state) %>%
   dplyr::summarise(count = n(), acres = sum(round(acres,0)))
 df_sum
@@ -133,10 +130,11 @@ df_sum
 write.csv(df_sum, file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 
 ## exploring the data
-table(dat2$source, dat2$conscat)
-table(dat2$source, dat2$owntype)
-table(dat2$source, dat2$state)
+# table(dat2$source, dat2$conscat)
+# table(dat2$source, dat2$owntype)
+# table(dat2$source, dat2$state)
 ## qtm(dat, fill = 'conscat')
 
 ## export just lowcountry data
 dat %>% st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile', append = FALSE)
+

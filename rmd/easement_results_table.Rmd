@@ -26,7 +26,7 @@ library(tidyverse)
 # webshot::install_phantomjs()
 ## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
 ```
-# Lowcountry EJ Results (UN-FILTERED)
+# Lowcountry EJ Results (FILTERED)
 ## Conservation Land by Data Source
 ### Table 1 Square Miles of Conservation Land
 ```{r, include = TRUE, echo=FALSE}
@@ -69,7 +69,7 @@ kable(df, format = "latex", booktabs = T,
   as_image()
 ```
 
-### Table 2 Number of Conservation Reserves
+### Table 1.1 Number of Conservation Reserves
 ```{r, include = TRUE, echo=FALSE}
 
 # define data directory
@@ -111,7 +111,7 @@ kable(df, format = "latex", booktabs = T,
 ```
 
 ## Demographic Comparison by Region
-### Table 3 South Carolina
+### Table 2 South Carolina
 ```{r include=TRUE, echo=FALSE}
 # define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
@@ -131,7 +131,7 @@ df2 %>%
   as_image(width = 9)
 ```
 
-### Table 4 Georgia
+### Table 2.1 Georgia
 ```{r include=TRUE, echo=FALSE}
 
 # define data directory

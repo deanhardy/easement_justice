@@ -22,14 +22,14 @@ st <- NULL # used in loop for state data download
 bg <- NULL # used in for loop for block group data download
 gm <- NULL # used in for loop for calculating gmedian
 YR <- 2018
-ST <- c('AL', 'GA', 'FL', 'SC', 'NC')
+ST <- c('GA', 'FL', 'SC', 'NC')
 var = c(white = "B03002_003E", black = "B03002_004E",
         native_american = "B03002_005E", asian = "B03002_006E",
         hawaiian = "B03002_007E", other = "B03002_008E",
         multiracial = "B03002_009E", latinx = "B03002_012E", total = "B03002_001E",
-        medhhinc = "B19049_001E", agghhinc = "B19025_001E", hu = "B25001_001E")
+        medhhinc = "B19049_001E", agghhinc = "B19025_001E", hu = "B25001_001E", mhv = "B25077_001")
  
-# all_vars <- load_variables(2016, 'acs5', cache = TRUE)
+# all_vars <- load_variables(2018, 'acs5', cache = TRUE)
 # ## define decennial variables of interest
 # dec_vars <- c(white = "P0050003", black = "P0050004",
 #               native_american = "P0050005", asian = "P0050006",
@@ -53,7 +53,7 @@ for(i in 1:length(ST)) {
 ## cleanup and export for use in comparison of state level numbers to CABZ numbers
 st2 <- st %>%
   dplyr::select(GEOID, NAME, total, white, black, native_american, asian, hawaiian,
-                other, multiracial, latinx, medhhinc, agghhinc, hu)
+                other, multiracial, latinx, medhhinc, agghhinc, hu, mhv)
 write.csv(st2, file.path(datadir, 'st_data.csv'))
 
 
@@ -92,7 +92,7 @@ bg2 <- bg %>%
   mutate(sqkm_bg = as.numeric(st_area(geometry)) / 1e6, mnhhinc = agghhinc/hu,
          propPOC = 1 - (white/total)) %>%
   dplyr::select(STATEFP, GEOID, ALAND, AWATER, sqkm_bg, total, white, black, native_american, asian, hawaiian,
-                other, multiracial, latinx, propPOC, medhhinc, agghhinc, hu, mnhhinc)
+                other, multiracial, latinx, propPOC, medhhinc, agghhinc, hu, mnhhinc, mhv)
 
 ## export census data
 bg2 %>% st_transform(crs = 4326) %>%

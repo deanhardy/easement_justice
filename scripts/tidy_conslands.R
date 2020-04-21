@@ -102,13 +102,20 @@ dat <- rbind(nced, padus, tnc) %>%
   filter(ecorg_tier == 1 & state %in% c('GA', 'SC') & !is.na(owntype))
 
 ## explore data by mgmt and ownership
-table(dat$source, dat$mgmttype)
-table(dat$source, dat$owntype)
+# table(dat$source, dat$conscat)
+# table(dat$source, dat$owntype)
+
+## reassembles single-part reserves in multi-part units (not spatially, but for descriptive stats)
+dat2 <- dat %>%
+  group_by(source, orig_id) %>%
+  summarise(state = first(state), owntype = first(owntype), mgmttype = first(mgmttype),
+            management = first(management), sitename = first(sitename),
+            acres = sum(acres), gap = first(gap), purpose = first(purpose),
+            ecorg_tier = first(ecorg_tier), conscat = first(conscat))
 
 ## summary descriptive stats
-df_sum <- dat %>%
+df_sum <- dat2 %>%
   st_drop_geometry() %>%
-  mutate(management = as.character(management)) %>%
   group_by(source, conscat, state) %>%
   dplyr::summarise(count = n(), acres = sum(round(acres,0)))
 df_sum

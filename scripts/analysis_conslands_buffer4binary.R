@@ -25,12 +25,12 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 ## read in data
 dat <- st_read(file.path(datadir, 'cons_lands.shp'))
 
-## filter to lowcountry and public or private
+## filter to public or private
 pub <- dat %>%
-  filter(ecorg_tier == 1 & conscat == 'Public') %>%
+  filter(conscat == 'Public') %>%
   st_union()
 pvt <- dat %>%
-  filter(ecorg_tier == 1 & conscat == 'Private') %>%
+  filter(conscat == 'Private') %>%
   st_union()
 
 pub %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## miles^2
@@ -82,10 +82,10 @@ st_geometry(int) <- NULL
 
 cl_buf2 <- merge(cl2, int, all = TRUE)
   
-tm_shape(st) + 
-  tm_polygons() + 
-tm_shape(cl2) + 
-  tm_polygons()
+# tm_shape(st) + 
+#   tm_polygons() + 
+# tm_shape(cl2) + 
+#   tm_polygons()
 
 ## save ecoregion 1 (ie lowcountry) cons lands
 cl_buf2 %>% st_as_sf() %>% st_transform(4326) %>%
@@ -135,7 +135,7 @@ m <- leaflet() %>%
             values = buf$buf_m,
             title = "Buffer Zone") %>%
   addScaleBar("bottomright")
-m
+# m
 
 ## exporting as html file for exploration
 # library(htmlwidgets)
