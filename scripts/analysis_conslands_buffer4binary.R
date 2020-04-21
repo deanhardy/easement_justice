@@ -55,8 +55,19 @@ for(i in BUF) {
     pvt_buf <- rbind(OUT, pvt_buf)
 }
 
-pub_buf %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## mi^2
-pvt_buf %>% st_transform(alb) %>% st_area() * 3.86101562499999206e-7 ## mi^2
+pub_buf %>% 
+  st_as_sf() %>% 
+  filter(buf_m == 40) %>% 
+  st_transform(alb) %>% 
+  mutate(area = st_area(geometry) * 3.86101562499999206e-7) %>% 
+  summarise(sum = sum(area)) ## mi^2
+
+pvt_buf %>% 
+  st_as_sf() %>% 
+  filter(buf_m == 480) %>% 
+  st_transform(alb) %>% 
+  mutate(area = st_area(geometry) * 3.86101562499999206e-7) %>% 
+  summarise(sum = sum(area)) ## mi^2
 
 cl_buf <- rbind(pvt_buf, pub_buf)
 
