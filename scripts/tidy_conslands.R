@@ -129,4 +129,4 @@ write.csv(df_sum, file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 ## qtm(dat, fill = 'conscat')
 
 ## export just lowcountry data
-dat %>% st_write(file.path(datadir, 'cons_lands.shp'), driver = 'ESRI Shapefile', append = FALSE)
+dat %>% st_transform(4326) %>% st_write(file.path(datadir, 'cons_lands.geojson'), delete_dsn = TRUE)

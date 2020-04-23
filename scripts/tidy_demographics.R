@@ -96,13 +96,13 @@ bg2 <- bg %>%
 
 ## export census data
 bg2 %>% st_transform(crs = 4326) %>%
-  st_write(file.path(datadir, "bg_data.geojson"), driver = 'geojson', delete_dsn = TRUE)
+  st_write(file.path(datadir, "bg_demg.geojson"), driver = 'geojson', delete_dsn = TRUE)
 
 ## export census data as centroids
 bg2 %>% 
   st_centroid() %>%
   st_transform(crs = 4326) %>%
-  st_write(file.path(datadir, "bg_data_cntrd.geojson"), driver = 'geojson', delete_dsn = TRUE)
+  st_write(file.path(datadir, "bg_demg_cntrd.geojson"), driver = 'geojson', delete_dsn = TRUE)
 
 
 ###### BG Geography (median hh income) ######
@@ -155,8 +155,5 @@ for(i in 1:length(ST)) {
 ## export HH income data for use in grouped estimated HH median
 write.csv(gm, file.path(datadir, 'gm_data.csv'))
 
-
-# gm %>% st_transform(crs = 4326) %>%
-#   st_write(file.path(datadir, "gm_data.geojson"), driver = 'geojson', delete_dsn = TRUE)
 
 

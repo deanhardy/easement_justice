@@ -23,7 +23,7 @@ pvt_buf <- NULL
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## read in data
-dat <- st_read(file.path(datadir, 'cons_lands.shp'))
+dat <- st_read(file.path(datadir, 'cons_lands.geojson'))
 
 ## filter to public or private
 pub <- dat %>%

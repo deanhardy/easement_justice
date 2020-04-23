@@ -67,14 +67,14 @@ st_centroid(cabz) %>%
 ###################################################
 
 ## define intersection between cons area ben zones and block groups
-int <- as_tibble(st_intersection(cabz, bg))
+int <- as_tibble(st_intersection(bg, cabz))
 
 ## proportional area adjustment/allocation method
 percBGinBZ <- int %>%
   mutate(sqkm_bginbz = as.numeric(st_area(geometry) / 1e6)) %>%
   mutate(perc_bginbz = (sqkm_bginbz/sqkm_bg), sqkm_land = ALAND/ 1e6)
 
-## save percBGinBUF data to use in median HH income estimation (see below)
+## save percBGinBZ data to use in median HH income estimation (see below)
 bg_for_emed <- percBGinBZ %>%
   data.frame() %>%
   mutate(GEOID = as.character(GEOID)) %>%
@@ -82,7 +82,7 @@ bg_for_emed <- percBGinBZ %>%
   rename(BZID = rowid)
 
 ## demographic analysis of cons area ben zones
-bz_geog <- percBGinBZ %>%
+cabz_demo <- percBGinBZ %>%
   mutate(tot_pop = total * perc_bginbz,
          white = white * perc_bginbz, 
          black = black * perc_bginbz,
@@ -92,7 +92,7 @@ bz_geog <- percBGinBZ %>%
          hu = hu * perc_bginbz,
          sqkm_land = sqkm_land * perc_bginbz) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
-  group_by(rowid) %>% ## regroups to cons areas after demo analysis on intersections
+  group_by(rowid) %>% ## regroups to cons buffer (or beneficiary?) zones after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
@@ -107,9 +107,9 @@ bz_geog <- percBGinBZ %>%
 
 cabz2 <- cabz %>% select(rowid, statefp) 
 st_geometry(cabz2) <- NULL
-bz_geog2 <- merge(bz_geog, cabz2)
-  
+cabz_demo2 <- merge(cabz_demo, cabz2)
 
+# cabz_demo %>% st_as_sf() %>% filter(bzone_m == 16000 & buf_m == 320) %>% qtm()
 
 ###
 ###### Estimate median HH incomes within AOI #######
@@ -166,7 +166,7 @@ emed <- bg2 %>%
   mutate(emedhhinc = round(emedhhinc, 0))
 
 ## merge emedian hh income with other demographic data
-df <- bz_geog2 %>% 
+df <- cabz_demo2 %>% 
   merge(emed, by = "rowid") %>%
   st_transform(4326) 
 # filter(state %in% c('GA', 'SC'))
@@ -181,10 +181,10 @@ ggplot(df, aes(x = emedhhinc, group = conscat)) +
 ##############################
 
 ## export cabz as polygons
-df %>% st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
+df %>% st_write(file.path(datadir, 'cons_demographics.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 ## export ONLY attribute data
 df %>%
   st_set_geometry(NULL) %>%
-  write.csv(file.path(datadir, 'cabz_data.csv'), row.names = FALSE)
+  write.csv(file.path(datadir, 'cons_demographics_data.csv'), row.names = FALSE)
 
