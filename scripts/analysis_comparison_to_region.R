@@ -29,37 +29,37 @@ st <- read.csv(file.path(datadir, 'st_data.csv')) %>%
 cl_demg <- read.csv(file.path(datadir, 'cl_demg_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
-  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
+  select(cat, statefp, sqkm_bz, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat, statefp) %>%
-  summarise(tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
-            propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
+  summarise(sqkm = mean (sqkm_bz), tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
+            propPOC = mean(propPOC), medhhinc = mean(medhhinc), ) %>%
   as.data.frame()
-
-## GA and SC lowcountry data by state
-lc <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
-  rename(medhhinc = emedhhinc) %>%
-  mutate(cat = 'Lowcountry') %>%
-  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 
 ## combine GA and SC reserve data
 cl_demg_entire <- read.csv(file.path(datadir, 'cl_demg_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
-  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
+  select(cat, statefp, sqkm_bz, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat) %>%
-  summarise(statefp = 'Lowcountry', tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
+  summarise(statefp = 'Lowcountry', sqkm = mean(sqkm_bz), tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
             propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   as.data.frame()
 
+## GA and SC lowcountry data by state
+lc <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
+  rename(medhhinc = emedhhinc, sqkm = sqkm_land) %>%
+  mutate(cat = 'Lowcountry') %>%
+  select(cat, statefp, sqkm, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
+
 ## combine GA and SC lowcountry data
 lc_entire <- read.csv(file.path(datadir, 'lowcountry_data.csv')) %>%
-  rename(medhhinc = emedhhinc) %>%
+  rename(medhhinc = emedhhinc, sqkm = sqkm_land) %>%
   mutate(cat = 'Lowcountry', statefp = 'Lowcountry') %>%
-  select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
+  select(cat, statefp, sqkm, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 
-df <- rbind(st, cl_demg)
 
-df2 <- rbind(df, cl_demg_entire)
+
+df2 <- rbind(cl_demg, cl_demg_entire)
 
 df3 <- rbind(df2, lc)
 
@@ -70,6 +70,7 @@ df5 <- df4 %>%
   select(cat:medhhinc) %>%
   mutate(region = if_else(statefp == 45, 'South Carolina', 
                          if_else(statefp == 13, 'Georgia', 'Lowcountry')),
+         sqkm = round(sqkm, 0),
          tot_pop = round(tot_pop, 0),
          pwhite = round(pwhite, 2),
          pblack = round(pblack, 2),
@@ -78,8 +79,6 @@ df5 <- df4 %>%
          propPOC = round(propPOC, 2),
          medhhinc = round(medhhinc, 0)) %>%
   select(-statefp)
-
-view(df5)
 
 write.csv(df5, file.path(datadir, 'regional-comparison.csv'))
 

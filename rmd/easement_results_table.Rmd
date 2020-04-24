@@ -29,53 +29,20 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 # webshot::install_phantomjs()
 ## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
 ```
-# Lowcountry EJ Results (FILTERED)
-## Conservation Land by Data Source
-### Table 1 Square Miles of Conservation Land
+# Lowcountry EJ Results
+# --
+### Table 1. Conservation Reserves by Data Source. 
+Square miles of conservation land with number of reserves in parentheses. All reported numbers are direct from data source, unfiltered and uncleaned with the only exception being clipping multipart polygons to the Lowcountry region. 
 ```{r, include = TRUE, echo=FALSE}
 
-df <- read.csv(file.path(datadir, 'cl-stats.csv'))[-1] %>%
+df <- read.csv(file.path(datadir, 'cl-stats-unfiltered.csv'))[-1] %>%
   rename(area = acres) %>%
   mutate(area = round(area * 0.0015625)) %>%
   mutate(GA.Pvt = ifelse(conscat == 'Private' & state == 'GA', area, NA),
          GA.Pub = ifelse(conscat == 'Public' & state == 'GA', area, NA),
          SC.Pvt = ifelse(conscat == 'Private' & state == 'SC', area, NA),
          SC.Pub = ifelse(conscat == 'Public' & state == 'SC', area, NA)) %>%
-  select(-count, -area, -state, -conscat) %>%
-  mutate(source = as.character(source)) %>%
-  mutate(source = if_else(source == 'nced', 'NCED', 
-                          if_else(source == 'padus', 'PAD-US',
-                                  if_else(source == 'tnc', 'SC-TNC', NULL)))) %>%
-  group_by(source) %>%
-  summarise(
-    GA.Pvt = sum(GA.Pvt, na.rm=T),
-    SC.Pvt = sum(SC.Pvt, na.rm=T),
-    GA.Pub = sum(GA.Pub, na.rm=T),
-    SC.Pub = sum(SC.Pub, na.rm=T))
-# HTML table
-# kable(df, format = "html", caption = "Demo Table") %>%
-#   kable_styling(bootstrap_options = "striped",
-#                 full_width = F) %>%
-#  # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
-#   add_footnote(c("table footnote")) 
-
-# LaTeX Table
-kable(df, format = "latex", booktabs = T, 
-      caption = NULL,
-      col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
-  kable_styling(full_width = F) %>%
-  add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
-  # add_footnote(c("table footnote")) %>%
-  as_image()
-```
-
-### Table 1.1 Number of Conservation Reserves
-```{r, include = TRUE, echo=FALSE}
-
-df <- read.csv(file.path(datadir, 'cl-stats.csv'))[-1] %>%
-  rename(area = acres) %>%
-  mutate(area = round(area * 0.0015625)) %>%
-  mutate(GA.PvtC = ifelse(conscat == 'Private' & state == 'GA', count, NA),
+    mutate(GA.PvtC = ifelse(conscat == 'Private' & state == 'GA', count, NA),
          GA.PubC = ifelse(conscat == 'Public' & state == 'GA', count, NA),
          SC.PvtC = ifelse(conscat == 'Private' & state == 'SC', count, NA),
          SC.PubC = ifelse(conscat == 'Public' & state == 'SC', count, NA)) %>%
@@ -85,29 +52,44 @@ df <- read.csv(file.path(datadir, 'cl-stats.csv'))[-1] %>%
                           if_else(source == 'padus', 'PAD-US',
                                   if_else(source == 'tnc', 'SC-TNC', NULL)))) %>%
   group_by(source) %>%
-  summarise(
+  summarise(GA.Pvt = sum(GA.Pvt, na.rm=T),
+    SC.Pvt = sum(SC.Pvt, na.rm=T),
+    GA.Pub = sum(GA.Pub, na.rm=T),
+    SC.Pub = sum(SC.Pub, na.rm=T),
     GA.PvtC = sum(GA.PvtC, na.rm=T),
     SC.PvtC = sum(SC.PvtC, na.rm=T),
     GA.PubC = sum(GA.PubC, na.rm=T),
-    SC.PubC = sum(SC.PubC, na.rm=T))
-# HTML table
-# kable(df, format = "html", caption = "Demo Table") %>%
-#   kable_styling(bootstrap_options = "striped",
-#                 full_width = F) %>%
-#  # add_header_above(c(" ", "Group 1" = 2, "Group 2[note]" = 2)) %>%
-#   add_footnote(c("table footnote")) 
+    SC.PubC = sum(SC.PubC, na.rm=T)) %>%
+  mutate(GA.Pvt = paste(GA.Pvt, " (", GA.PvtC, ")", sep = ""),
+         SC.Pvt = paste(SC.Pvt, "(", SC.PvtC, ")", sep = ""),
+         GA.Pub = paste(GA.Pub, " (", GA.PubC, ")", sep = ""),
+         SC.Pub = paste(SC.Pub, " (", SC.PubC, ")", sep = "")) %>%
+  select(source:SC.Pub)
+
+## replace zeros
+df[3,2] <- paste("--")
+df[3,4] <- paste("--")
+
+df[3,3] <- paste("**",df[3,3],"**", sep = "")
+df[2,4] <- paste("**",df[2,4],"**", sep = "")
+df[2,5] <- paste("**",df[2,5],"**", sep = "")
+df[1,2] <- paste("**",df[1,2],"**", sep = "")
+
+# helpful info on kable use: https://rpubs.com/yutao/444395
 
 # LaTeX Table
-kable(df, format = "latex", booktabs = T, 
-      caption = NULL,
+kable(df, format = "latex", booktabs = T, caption = NULL,
+      align = c("l", "c", "c", "c", "c"),
       col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
-  kable_styling(full_width = F) %>%
+  # kable_styling(full_width = NULL) %>%
+  # row_spec(3, bold = T, hline_after = T) %>%
   add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
-  # add_footnote(c("table footnote")) %>%
+  add_footnote(c("**We selected these reserves for our analysis to minimize duplication across data sources.**"), notation = "symbol") %>%
   as_image()
 ```
 
-### Table 2. Demographic Comparison by Region
+### Table 2. Demographic Comparison by Region. 
+Area and Beneficiary Population is total for Lowcountry subregions, but mean for private and public subregions. Results are from analysis with data filtered by source (i.e., Private is NCED in GA and SC-TNC in SC; Public is PAD-US for both states). Numbers shown are for the 16 km beneficiary zone and 320 m conservation reserve buffer zone pairing.
 ```{r include=TRUE, echo=FALSE}
 
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
@@ -119,17 +101,19 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
   select(region, cat:medhhinc)
 
+# Other.exp <- expression(paste("Other (%)", a^2))
+
 # LaTeX Table
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = c('Region', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income ($US)')) %>%
-  kable_styling(latex_options = "scale_down", "striped",
-                full_width = NULL) %>%
+         col.names = c('Region/Subregion', 'Area (km^2)', 'Beneficiary\nPopulation', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
+  # kable_styling(latex_options = "scale_down", "striped",
+  #               full_width = NULL) %>%
   pack_rows("Lowcountry", 1, 3) %>%
   pack_rows("South Carolina", 4, 6) %>%
   pack_rows("Georgia", 7, 9) %>%
-  # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
-  # add_footnote(c("State level included just for us; will not be included in pub")) %>%
+  add_footnote(c("Other includes Native American, Asian, Multiracial, and Other Race groups as defined in the U.S. Census.",
+                 "People of Color includes Black and Latinx plus our Other racial grouping."), notation = "alphabet") %>%
   as_image(width = 9)
 ```

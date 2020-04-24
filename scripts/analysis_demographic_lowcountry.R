@@ -97,7 +97,7 @@ AOI_geog <- percBGinAOI %>%
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0)) %>%
   merge(AOI) %>%
-  dplyr::select(statefp, tot_pop, popden, pwhite, white, pblack, black, pother, other, 
+  dplyr::select(statefp, sqkm_land, tot_pop, popden, pwhite, white, pblack, black, pother, other, 
                 platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
@@ -198,7 +198,7 @@ AOI_geog <- percBGinAOI %>%
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
          mnhhinc = round(agghhinc/hu, 0)) %>%
   merge(AOI) %>%
-  dplyr::select(tot_pop, popden, pwhite, white, pblack, black, pother, other, 
+  dplyr::select(tot_pop, sqkm_land, popden, pwhite, white, pblack, black, pother, other, 
                 platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
   st_as_sf()
 

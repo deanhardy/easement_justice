@@ -20,14 +20,14 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
-lc_tier1 <- st_read(file.path(datadir, "lc_tier1.shp")) %>%
+lc_tier1 <- st_read(file.path(datadir, "lc_tier1/lc_tier1.shp")) %>%
   st_transform(crs = alb) %>%
   mutate(area = st_area(geometry)*3.86102e-7)
 
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## assuming NAs and unknowns are PRIVATE (need to revise later)
 ## DO NOT SHARE DATA
-tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
+tnc <- st_read(file.path(datadir, "tnc/tnc.shp")) %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'tnc', acres = as.numeric(st_area(geometry) * 0.00024710538), 
          purpose = PurposeCde, state = 'SC', gap = 'NA') %>%
@@ -64,7 +64,7 @@ tnc <- st_read(file.path(datadir, "tnc.shp")) %>%
 
 ## import NCED data for coastal plain (lc tier 3) region in SC & GA
 ## assuming all unknowns are PUBLIC (need to manually edit later)
-nced <- st_read(file.path(datadir, "nced.shp")) %>%
+nced <- st_read(file.path(datadir, "nced/nced.shp")) %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'nced', acres = as.numeric(st_area(geometry) * 0.00024710538)) %>%
   dplyr::select(id, owntype, eholdtype, esmthldr, sitename, pubaccess, state, 
@@ -79,7 +79,7 @@ nced <- st_read(file.path(datadir, "nced.shp")) %>%
 
 ## import PAD-US data
 ## assuming unknowns are PUBLIC
-padus <- st_read(file.path(datadir, "padus.shp")) %>%
+padus <- st_read(file.path(datadir, "padus/padus.shp")) %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'padus', acres = as.numeric(st_area(geometry) * 0.00024710538), 
          purpose = 'NA') %>%
@@ -120,7 +120,7 @@ df_sum <- dat2 %>%
   dplyr::summarise(count = n(), acres = sum(round(acres,0)))
 df_sum
 
-write.csv(df_sum, file.path(datadir, 'cons-lands-descriptive-stats.csv'))
+write.csv(df_sum, file.path(datadir, 'cl-stats-unfiltered.csv'))
 
 ## exploring the data
 # table(dat2$source, dat2$conscat)
@@ -129,4 +129,5 @@ write.csv(df_sum, file.path(datadir, 'cons-lands-descriptive-stats.csv'))
 ## qtm(dat, fill = 'conscat')
 
 ## export just lowcountry data
-dat %>% st_transform(4326) %>% st_write(file.path(datadir, 'cons_lands.geojson'), delete_dsn = TRUE)
+dat %>% st_transform(4326) %>% st_write(file.path(datadir, 'cl-unfiltered.geojson'), delete_dsn = TRUE)
+
