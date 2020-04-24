@@ -38,7 +38,8 @@ bg <- st_read(file.path(datadir, "bg_demg.geojson"), stringsAsFactors = FALSE) %
   st_transform(crs = alb)
 
 ## median HH income data
-gm <- read.csv(file.path(datadir, 'gm_data.csv'), stringsAsFactors = FALSE)
+gm <- read.csv(file.path(datadir, 'gm_data.csv'), stringsAsFactors = FALSE) %>%
+  mutate(GEOID = as.character(GEOID))
 
   
   # st_read(file.path(datadir, "gm_data.geojson"), stringsAsFactors = FALSE) %>%
@@ -50,7 +51,6 @@ gm <- read.csv(file.path(datadir, 'gm_data.csv'), stringsAsFactors = FALSE)
   # st_transform(crs = alb)
 
 
-###### Proportional area adjustment method ######
 ## import state geometry
 library(tigris)
 st <- states() %>% st_as_sf() %>%
@@ -58,6 +58,8 @@ st <- states() %>% st_as_sf() %>%
   st_transform(alb) %>%
   select(STATEFP, geometry)
 
+
+###### BY STATE: Proportional area adjustment method ######
 ## intersection between state geometry and AOI
 intAOI <- st_intersection(st, AOI) 
 
@@ -159,3 +161,70 @@ df %>%
   st_set_geometry(NULL) %>%
   write.csv(file.path(datadir, 'lowcountry-by-state_data.csv'), row.names = FALSE)
 
+
+###### LOWCOUNTRY REGION: Proportional area adjustment method ######
+
+## intersection between block groups and state-bounded AOI
+int <- as_tibble(st_intersection(AOI, bg))
+
+## proportional area adjustment/allocation method
+percBGinAOI <- int %>%
+  mutate(sqkm_bginAOI = as.numeric(st_area(geometry) / 1e6)) %>%
+  mutate(perc_bginAOI = (sqkm_bginAOI/sqkm_bg), sqkm_land = ALAND/ 1e6)
+
+## save percBGinAOI data to use in median HH income estimation (see below)
+bg_for_emed <- percBGinAOI %>%
+  data.frame() %>%
+  mutate(GEOID = as.character(GEOID)) %>%
+  select(GEOID, perc_bginAOI)
+
+
+###### Demographic analysis of AOI ######
+AOI_geog <- percBGinAOI %>%
+  mutate(tot_pop = total * perc_bginAOI,
+         white = white * perc_bginAOI, 
+         black = black * perc_bginAOI,
+         other = (native_american+asian+hawaiian+other+multiracial) * perc_bginAOI,
+         latinx = latinx * perc_bginAOI,
+         hu = hu * perc_bginAOI,
+         sqkm_land = sqkm_land * perc_bginAOI) %>%
+  mutate(agghhinc = hu * mnhhinc) %>%
+  # group_by(statefp) %>% ## regroups to cons areas after demo analysis on intersections
+  summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
+            other = sum(other), latinx = sum(latinx), 
+            hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
+            sqkm_land = sum(sqkm_land)) %>%
+  mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
+         platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
+         mnhhinc = round(agghhinc/hu, 0)) %>%
+  merge(AOI) %>%
+  dplyr::select(tot_pop, popden, pwhite, white, pblack, black, pother, other, 
+                platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
+  st_as_sf()
+
+
+###### Estimate median household incomes within AOI ######
+
+bg2 <- gm %>%
+  # mutate(statefp = as.numeric(str_extract(GEOID, "^.{2}"))) %>%
+  left_join(bg_for_emed, by = "GEOID") %>%
+  filter(perc_bginAOI != 'NA') %>%
+  mutate(eHH = households * perc_bginAOI) %>%
+  group_by(variable) %>%
+  summarise(interval = interval[[1]], eHH = sum(eHH), households = sum(households)) %>%
+  summarise(gmedian = GMedian(eHH, interval, sep = "-", trim = 'cut'))
+
+## import gmedian estimates for hh income
+emed <- bg2 %>%
+  rename(emedhhinc = gmedian) %>%
+  mutate(emedhhinc = round(emedhhinc, 0))
+
+## merge emedian hh income with other demographic data
+df <- AOI_geog %>% 
+  merge(emed) %>%
+  st_transform(4326) 
+
+###### Export ONLY attribute data ######
+df %>%
+  st_set_geometry(NULL) %>%
+  write.csv(file.path(datadir, 'lowcountry_data.csv'), row.names = FALSE)

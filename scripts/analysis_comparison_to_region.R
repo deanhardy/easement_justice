@@ -47,24 +47,29 @@ cl_demg_entire <- read.csv(file.path(datadir, 'cl_demg_data.csv')) %>%
   rename(cat = conscat, medhhinc = emedhhinc) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat) %>%
-  summarise(tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
+  summarise(statefp = 'Lowcountry', tot_pop = mean(tot_pop), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
             propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   as.data.frame()
 
 ## combine GA and SC lowcountry data
-lc_entire <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
+lc_entire <- read.csv(file.path(datadir, 'lowcountry_data.csv')) %>%
   rename(medhhinc = emedhhinc) %>%
-  mutate(cat = 'Lowcountry') %>%
+  mutate(cat = 'Lowcountry', statefp = 'Lowcountry') %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 
-df <- rbind(st, cabz)
+df <- rbind(st, cl_demg)
 
-df2 <- rbind(df, lc)
+df2 <- rbind(df, cl_demg_entire)
 
-df3 <- df2 %>%
+df3 <- rbind(df2, lc)
+
+df4 <- rbind(df3, lc_entire)
+
+df5 <- df4 %>%
   as.data.table() %>%
   select(cat:medhhinc) %>%
-  mutate(state = if_else(statefp == 45, 'South Carolina', 'Georgia'),
+  mutate(region = if_else(statefp == 45, 'South Carolina', 
+                         if_else(statefp == 13, 'Georgia', 'Lowcountry')),
          tot_pop = round(tot_pop, 0),
          pwhite = round(pwhite, 2),
          pblack = round(pblack, 2),
@@ -74,7 +79,7 @@ df3 <- df2 %>%
          medhhinc = round(medhhinc, 0)) %>%
   select(-statefp)
 
-view(df3)
+view(df5)
 
-write.csv(df3, file.path(datadir, 'state-comparison.csv'))
+write.csv(df5, file.path(datadir, 'regional-comparison.csv'))
 

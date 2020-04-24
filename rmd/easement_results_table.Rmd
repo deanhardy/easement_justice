@@ -23,6 +23,9 @@ library(knitr)
 library(kableExtra)
 library(tidyverse)
 
+# define data directory
+datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
+
 # webshot::install_phantomjs()
 ## https://haozhu233.github.io/kableExtra/save_kable_and_as_image.html
 ```
@@ -31,10 +34,7 @@ library(tidyverse)
 ### Table 1 Square Miles of Conservation Land
 ```{r, include = TRUE, echo=FALSE}
 
-# define data directory
-datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
-
-df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
+df <- read.csv(file.path(datadir, 'cl-stats.csv'))[-1] %>%
   rename(area = acres) %>%
   mutate(area = round(area * 0.0015625)) %>%
   mutate(GA.Pvt = ifelse(conscat == 'Private' & state == 'GA', area, NA),
@@ -72,10 +72,7 @@ kable(df, format = "latex", booktabs = T,
 ### Table 1.1 Number of Conservation Reserves
 ```{r, include = TRUE, echo=FALSE}
 
-# define data directory
-datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
-
-df <- read.csv(file.path(datadir, 'cons-lands-descriptive-stats.csv'))[-1] %>%
+df <- read.csv(file.path(datadir, 'cl-stats.csv'))[-1] %>%
   rename(area = acres) %>%
   mutate(area = round(area * 0.0015625)) %>%
   mutate(GA.PvtC = ifelse(conscat == 'Private' & state == 'GA', count, NA),
@@ -110,45 +107,29 @@ kable(df, format = "latex", booktabs = T,
   as_image()
 ```
 
-## Demographic Comparison by Region
-### Table 2 South Carolina
+### Table 2. Demographic Comparison by Region
 ```{r include=TRUE, echo=FALSE}
-# define data directory
-datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
-df2 <- read.csv(file.path(datadir, 'state-comparison.csv'))[-1] 
+df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
+  filter(cat != 'State') %>%
+  # group_by(region) %>%
+  mutate(id = if_else(region == "Lowcountry", 1, 
+                      if_else(region == "South Carolina", 2, 3))) %>%
+  arrange(id, region, cat) %>%
+  # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
+  select(region, cat:medhhinc)
 
 # LaTeX Table
 df2 %>%
-  filter(state == 'South Carolina') %>%
-  select(-state) %>%
+  select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = c('Region^a', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income')) %>%
+         col.names = c('Region', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income ($US)')) %>%
   kable_styling(latex_options = "scale_down", "striped",
                 full_width = NULL) %>%
+  pack_rows("Lowcountry", 1, 3) %>%
+  pack_rows("South Carolina", 4, 6) %>%
+  pack_rows("Georgia", 7, 9) %>%
   # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
-  add_footnote(c("State level included just for us; will not be included in pub")) %>%
-  as_image(width = 9)
-```
-
-### Table 2.1 Georgia
-```{r include=TRUE, echo=FALSE}
-
-# define data directory
-datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
-
-df2 <- read.csv(file.path(datadir, 'state-comparison.csv'))[-1] 
-
-# LaTeX Table
-df2 %>%
-  filter(state == 'Georgia') %>%
-  select(-state) %>%
-  kable(format = "latex", booktabs = T, caption = NULL, 
-        align = 'lrrrrrrr',
-         col.names = c('Region^a', 'Total Population', 'White (%)', 'Black (%)', 'Other Race (%)', 'Latinx (%)', 'People of Color (%)', 'Median Income')) %>%
-  kable_styling(latex_options = "scale_down", "striped",
-                full_width = NULL) %>%
-  # add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
-  add_footnote(c("State level included just for us; will not be included in pub")) %>%
+  # add_footnote(c("State level included just for us; will not be included in pub")) %>%
   as_image(width = 9)
 ```
