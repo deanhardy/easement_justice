@@ -27,7 +27,7 @@ var = c(white = "B03002_003E", black = "B03002_004E",
         native_american = "B03002_005E", asian = "B03002_006E",
         hawaiian = "B03002_007E", other = "B03002_008E",
         multiracial = "B03002_009E", latinx = "B03002_012E", total = "B03002_001E",
-        medhhinc = "B19049_001E", agghhinc = "B19025_001E", hu = "B25001_001E", mhv = "B25077_001")
+        medhhinc = "B19049_001E", agghhinc = "B19025_001E", hu = "B25001_001E", mhv = "B25077_001E")
  
 # all_vars <- load_variables(2018, 'acs5', cache = TRUE)
 # ## define decennial variables of interest

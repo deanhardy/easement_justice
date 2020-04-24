@@ -23,7 +23,8 @@ pvt_buf <- NULL
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## read in data
-dat <- st_read(file.path(datadir, 'cons_lands.geojson'))
+dat <- st_read(file.path(datadir, 'cl.geojson')) %>%
+  st_transform(alb)
 
 ## filter to public or private
 pub <- dat %>%
@@ -100,7 +101,7 @@ cl_buf2 <- merge(cl2, int, all = TRUE)
 
 ## save ecoregion 1 (ie lowcountry) cons lands
 cl_buf2 %>% st_as_sf() %>% st_transform(4326) %>%
-  st_write(file.path(datadir, 'conslands_er1_bufs.geojson'), delete_dsn=TRUE)
+  st_write(file.path(datadir, 'cl_bufs.geojson'), delete_dsn=TRUE)
 
 #########################
 ## leaflet map
@@ -146,11 +147,11 @@ m <- leaflet() %>%
             values = buf$buf_m,
             title = "Buffer Zone") %>%
   addScaleBar("bottomright")
-# m
+m
 
 ## exporting as html file for exploration
 # library(htmlwidgets)
 # saveWidget(m, 
-#            file="/Users/dhardy/Dropbox/r_data/easement-justice/buffer_zones.html",
+#            file="/Users/dhardy/Dropbox/r_data/easement-justice/cl_bufferzones.html",
 #            title = "Buffer Zones")
 

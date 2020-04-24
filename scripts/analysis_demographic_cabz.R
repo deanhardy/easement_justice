@@ -19,12 +19,12 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 ##############################################################
 ## data import
 ##############################################################
-cons <- st_read(file.path(datadir, 'conslands_er1_bufs.geojson')) %>%
+cons <- st_read(file.path(datadir, 'cl_bufs.geojson')) %>%
   rowid_to_column() %>%
   st_transform(crs = alb)
 
 ## import census data
-bg <- st_read(file.path(datadir, "bg_data.geojson"), stringsAsFactors = FALSE) %>%
+bg <- st_read(file.path(datadir, "bg_demg.geojson"), stringsAsFactors = FALSE) %>%
   mutate(STATEFP = as.numeric(STATEFP), GEOID = as.numeric(GEOID)) %>%
   mutate(statefp = ifelse(STATEFP == 37, 45,
                           ifelse(STATEFP == 12, 13, 
@@ -181,10 +181,10 @@ ggplot(df, aes(x = emedhhinc, group = conscat)) +
 ##############################
 
 ## export cabz as polygons
-df %>% st_write(file.path(datadir, 'cons_demographics.geojson'), driver = 'geojson', delete_dsn = TRUE)
+df %>% st_write(file.path(datadir, 'cl_demg.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 ## export ONLY attribute data
 df %>%
   st_set_geometry(NULL) %>%
-  write.csv(file.path(datadir, 'cons_demographics_data.csv'), row.names = FALSE)
+  write.csv(file.path(datadir, 'cl_demg_data.csv'), row.names = FALSE)
 

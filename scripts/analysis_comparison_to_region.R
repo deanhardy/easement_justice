@@ -26,7 +26,7 @@ st <- read.csv(file.path(datadir, 'st_data.csv')) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 
 ## GA and SC reserve data by state
-cabz <- read.csv(file.path(datadir, 'cons_demographics_data.csv')) %>%
+cl_demg <- read.csv(file.path(datadir, 'cl_demg_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
@@ -42,7 +42,7 @@ lc <- read.csv(file.path(datadir, 'lowcountry-by-state_data.csv')) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc)
 
 ## combine GA and SC reserve data
-cabz_entire <- read.csv(file.path(datadir, 'cabz_data.csv')) %>%
+cl_demg_entire <- read.csv(file.path(datadir, 'cl_demg_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
   select(cat, statefp, tot_pop, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
