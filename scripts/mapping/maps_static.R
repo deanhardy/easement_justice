@@ -14,21 +14,23 @@ clr2 <- c('#7570b3', '#1b9e77')
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
 ## import "lowcountry" regions
-t1 <- st_read(file.path(datadir, "lc_tier1.shp")) %>%
+t1 <- st_read(file.path(datadir, "lc_tier1/lc_tier1.shp")) %>%
   st_transform(utm) %>%
   mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
-t2 <- st_read(file.path(datadir, "lc_tier2.shp")) %>%
-  st_transform(utm)%>%
-  mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
-t3 <- st_read(file.path(datadir, "lc_tier3.shp")) %>%
-  st_transform(utm)%>%
-  mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
+# t2 <- st_read(file.path(datadir, "lc_tier2.shp")) %>%
+#   st_transform(utm)%>%
+#   mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
+# t3 <- st_read(file.path(datadir, "lc_tier3.shp")) %>%
+#   st_transform(utm)%>%
+#   mutate(acres = as.numeric(st_area(geometry) * 0.00024710538))
 
-## import cons lands data
-dat <- st_read(file.path(datadir, 'cons_lands.geojson')) %>%
+## import cons buffer zones data
+dat <- st_read(file.path(datadir, 'cl_bufs.geojson')) %>%
   st_transform(utm) %>%
-  filter(acres > 5 & conscat != 'UNK') %>%
-  mutate(conscat = as.character(conscat))
+  mutate(conscat = as.character(conscat), acres = st_area(geometry) * 0.000247105) %>%
+  filter(acres >= 5 & buf_m == 320)
+
+attributes(dat$acres) = NULL
 
 ## download ancillary data for cartographic use
 ## https://www.census.gov/geo/maps-data/maps/2010ua.html
@@ -36,7 +38,7 @@ st <- states(cb = FALSE, resolution = '500k', year = NULL) %>%
   st_as_sf() %>%
   filter(NAME %in% c('Georgia', 'South Carolina', 'North Carolina', 'Alabama', 'Florida'))
 
-urb <- urban_areas(cb = TRUE, year = 2016) %>%
+urb <- urban_areas(cb = TRUE, year = 2018) %>%
   st_as_sf() %>%
   filter(NAME10 %in% c('Athens-Clarke County, GA', 'Savannah, GA', 'Brunswick, GA', 
                        'Charleston--North Charleston, SC', 'Myrtle Beach--Socastee, SC--NC', 'Hilton Head Island, SC')) %>%
@@ -52,10 +54,10 @@ urb <- urban_areas(cb = TRUE, year = 2016) %>%
 
 ## map of low country region
 fig <- 
-  tm_shape(dat) + tm_borders(col = NULL) +
+  tm_shape(dat) + tm_fill(col = 'conscat') +
   tm_shape(st) + tm_fill(col = 'white') +
   # tm_shape(t2) + tm_borders(col = 'grey65') +
-  tm_shape(t3) + tm_fill(col = 'grey95') +
+  # tm_shape(t3) + tm_fill(col = 'grey95') +
   tm_shape(t1) + tm_polygons(border.col = 'black', col = 'grey85', lwd = 2) +
   tm_shape(st) + tm_borders(col = 'black') + 
   tm_shape(urb) + tm_dots(col = 'black', size = 0.3, shape = 15, legend.show = FALSE) + 
@@ -75,11 +77,11 @@ fig <-
             outer.bg.color = 'black',
             outer.margins=c(0,0,0,0),
             # inner.margins=c(0,0,0,0), 
-            asp=3.2/2)
+            asp=3/2)
 # fig
 
-png(file.path(datadir, 'figures/lowcountry_region.png'), units = 'in',
-    height = 7.5, width = 13.33, res = 150)
+tiff(file.path(datadir, 'figures/lowcountry_region.tiff'), units = 'in',
+    height = 4, width = 6, res = 300, compression = 'lzw')
 fig
 dev.off()
 
@@ -132,9 +134,9 @@ dev.off()
 fig <- 
   tm_shape(dat) + tm_borders(col = NULL) +
   tm_shape(st) + tm_fill(col = 'white') +
-  tm_shape(t3) + tm_polygons(border.col = 'grey65', col = 'grey95') +
+  # tm_shape(t3) + tm_polygons(border.col = 'grey65', col = 'grey95') +
   # tm_shape(t2) + tm_borders(col = 'grey65') +
-  tm_shape(dat2) +
+  tm_shape(dat) +
   tm_fill(col = 'conscat', alpha = 1, palette = clr2,
           legend.show = FALSE) +
   tm_shape(st) + tm_borders(col = 'black') + 
@@ -184,7 +186,7 @@ fig <-
   tm_shape(st) + tm_fill(col = 'white') +
   tm_shape(t3) + tm_polygons(border.col = 'grey65', col = 'grey95') +
   # tm_shape(t2) + tm_borders(col = 'grey65') +
-  tm_shape(dat2) +
+  tm_shape(dat) +
   tm_fill(col = 'conscat', alpha = 1, palette = clr2,
           legend.show = FALSE) +
   tm_shape(st) + tm_borders(col = 'black') + 
