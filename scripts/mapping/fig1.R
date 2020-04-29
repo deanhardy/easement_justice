@@ -33,10 +33,10 @@ cl <- st_read(file.path(datadir, 'cl.geojson')) %>%
 ## import block group data
 bg <- st_read(file.path(datadir, 'bg_demg.geojson')) %>%
   st_transform(utm)
-  
+
 ## download ancillary data for cartographic use
 ## https://www.census.gov/geo/maps-data/maps/2010ua.html
-st <- states(cb = FALSE, resolution = '500k', year = NULL) %>%
+st <- states(cb = FALSE, resolution = '500k', year = 2017) %>%
   st_as_sf() %>%
   filter(NAME %in% c('Georgia', 'South Carolina', 'North Carolina', 'Alabama', 'Florida'))
 
@@ -98,12 +98,13 @@ dev.off()
 #### Conscat/DEMG Map ####
 
 pvt <- buf %>% filter(conscat == 'Private')
+mycols <- gray.colors(5, start = 0.3, end = 0.9, gamma = 2.2, rev = TRUE)
 
 fig2 <- 
   tm_shape(t1) + tm_borders(col = 'black', lwd = 2) +
   tm_shape(st) + tm_fill(col = 'white') +
   tm_shape(bg) + 
-  tm_polygons(col = 'propPOC') +
+  tm_polygons(col = 'propPOC', palette = mycols, style = 'fisher', lwd = 0.2) +
   tm_shape(pvt) +
   tm_fill(col = '#7570b3', alpha = 1, palette = '#7570b3',
             legend.show = FALSE) +
@@ -118,7 +119,7 @@ fig2 <-
                 border.col = 'black',
                 labels = c('Private Easement', 'Lowcountry'), 
                 col = c('#7570b3', 'white'), 
-                title = "MAP KEY") +
+                title = "") +
   tm_legend(position = c(0.68, 0.04),
             bg.color = 'white',
             frame = TRUE,
@@ -130,7 +131,7 @@ fig2 <-
             outer.margins=c(0,0,0,0),
             # inner.margins=c(0,0,0,0), 
             asp=3/2)
-fig2
+#fig2
 
 tiff(file.path(datadir, 'figures/pvt-demg-map.tiff'), units = 'in',
      height = 4, width = 6, res = 300, compression = 'lzw')
