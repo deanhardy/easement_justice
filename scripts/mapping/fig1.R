@@ -36,7 +36,7 @@ bg <- st_read(file.path(datadir, 'bg_demg.geojson')) %>%
 
 ## download ancillary data for cartographic use
 ## https://www.census.gov/geo/maps-data/maps/2010ua.html
-st <- states(cb = FALSE, resolution = '500k', year = 2017) %>%
+st <- states(cb = FALSE, resolution = '500k', year = NULL) %>%
   st_as_sf() %>%
   filter(NAME %in% c('Georgia', 'South Carolina', 'North Carolina', 'Alabama', 'Florida'))
 
@@ -100,25 +100,31 @@ dev.off()
 pvt <- buf %>% filter(conscat == 'Private')
 mycols <- gray.colors(5, start = 0.3, end = 0.9, gamma = 2.2, rev = TRUE)
 
+bgc <- bg %>%
+  filter(st_intersects(t1, ., sparse = F)) %>%
+  mutate(percPOC = round(propPOC *100),0)
+
 fig2 <- 
   tm_shape(t1) + tm_borders(col = 'black', lwd = 2) +
   tm_shape(st) + tm_fill(col = 'white') +
-  tm_shape(bg) + 
-  tm_polygons(col = 'propPOC', palette = mycols, style = 'fisher', lwd = 0.2) +
-  tm_shape(pvt) +
-  tm_fill(col = '#7570b3', alpha = 1, palette = '#7570b3',
-            legend.show = FALSE) +
+  tm_shape(bgc) + 
+  tm_polygons(col = 'percPOC', palette = mycols, style = 'fisher', lwd = 0.2, title = 'People of Color (%)') +
+  tm_shape(buf) +
+  tm_fill(col = 'conscat', alpha = 1, palette = clr2,
+          legend.show = FALSE) +
+  # tm_fill(col = 'green', alpha = 1, palette = '#7570b3',
+  #           legend.show = FALSE) +
   tm_shape(st) + tm_borders(col = 'black') + 
   tm_text(text = 'NAME') +
   tm_shape(t1) + tm_borders(col = 'black', lwd = 2) +
-  tm_shape(urb) + tm_dots(col = 'black', size = 0.3, shape = 15, legend.show = FALSE) + 
+  tm_shape(urb) + tm_dots(col = 'black', size = 0.1, shape = 15, legend.show = FALSE) + 
   tm_text(text = 'name', just = 'left', xmod = 0.3, ymod = -0.3, shadow = TRUE) + 
   tm_compass(type = 'arrow', size = 3, position = c(0.75,0.35)) +
   tm_scale_bar(breaks = c(0,50,100), text.size = 0.8, position= c(0.72, 0.26)) +
   tm_add_legend(type = c('fill'), 
                 border.col = 'black',
-                labels = c('Private Easement', 'Lowcountry'), 
-                col = c('#7570b3', 'white'), 
+                labels = c('Private Easement', 'Public Reserve', 'Lowcountry'), 
+                col = clr2, 
                 title = "") +
   tm_legend(position = c(0.68, 0.04),
             bg.color = 'white',
