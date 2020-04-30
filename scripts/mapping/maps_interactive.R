@@ -4,6 +4,7 @@ library(leaflet)
 library(leaflet.extras)
 library(sf)
 library(tidyverse)
+library(htmlwidgets)
 
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
@@ -42,18 +43,40 @@ m <- leaflet() %>%
   addTiles(group = "Open Street Map") %>%
   addTiles(attribution = '<a href="https://www.conservationeasement.us/"> | NCED</a>') %>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
-  setView(lng = -81, lat = 33, zoom = 7) %>%
+  setView(lng = -81, lat = 32.4, zoom = 8) %>%
   addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
   addPolylines(data = t1,
                color = 'black',
-               weight = 2) %>%
+               weight = 3) %>%
   addPolygons(data = bg,
+              popup = paste("<strong>Block Group Info</strong>", "<br>",
+                            "Land (%):", 100*buf$pland, "<br>",
+                            "Total Population: ", buf$tot_pop, "<br>",
+                            "Population Density (per KM^2): ", bg$total/bg$sqkm_bg, "<br>",
+                            "People of Color (%):", 100*buf$propPOC, "<br>",
+                            "Black (%):", 100*(bg$black/bg$total), "<br>",
+                            # "Other race (%):", 100*(bg$other/bg$total)), "<br>",
+                            "Latinx (%):", 100*(bg$latinx/bg$total), "<br>",
+                            "White (%):", 100*(bg$white/bg$total), "<br>",
+                            "Median HH Income (US$):", round(bg$medhhinc, 0), "<br>",
+                            "Mean HH Income (US$):", bg$mnhhinc),
               group = "US Census (Race)",
               color = 'black',
               fillColor = ~bgpal(bg$propPOC),
               fillOpacity = 1,
               weight = 0.5) %>%
   addPolygons(data = bg,
+              popup = paste("<strong>Block Group Info</strong>", "<br>",
+                            "Land (%):", 100*buf$pland, "<br>",
+                            "Total Population: ", buf$tot_pop, "<br>",
+                            "Population Density (per KM^2): ", bg$total/bg$sqkm_bg, "<br>",
+                            "People of Color (%):", 100*buf$propPOC, "<br>",
+                            "Black (%):", 100*(bg$black/bg$total), "<br>",
+                            # "Other race (%):", 100*(bg$other/bg$total)), "<br>",
+                            "Latinx (%):", 100*(bg$latinx/bg$total), "<br>",
+                            "White (%):", 100*(bg$white/bg$total), "<br>",
+                            "Median HH Income (US$):", round(bg$medhhinc, 0), "<br>",
+                            "Mean HH Income (US$):", bg$mnhhinc),
               group = "US Census (Income)",
               color = 'black',
               fillColor = ~bgincpal(bg$medhhinc),
@@ -70,6 +93,8 @@ m <- leaflet() %>%
                             "Beneficiary Zone (KM^2):", round(buf$sqkm_bz, 0), "<br>",
                             "Beneficiary Zone Radius (KM):", buf$bzone_m/1000, "<br>",
                             "Land (%):", 100*buf$pland, "<br>",
+                            "Total Population: ", buf$tot_pop, "<br>",
+                            "Population Density (per KM^2): ", buf$popden, "<br>",
                             "People of Color (%):", 100*buf$propPOC, "<br>",
                             "Black (%):", 100*buf$pblack, "<br>",
                             "Other race (%):", 100*buf$pother, "<br>",
@@ -97,8 +122,18 @@ m <- leaflet() %>%
               fillOpacity = 1,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery", "US Census (Race)",  "US Census (Income)"), 
-      overlayGroups = c("Conservation Reserves", "Conservation Buffer Zones", "Beneficiary Zones"),
+      overlayGroups = c("Conservation Buffer Zones", "Conservation Reserves", "Beneficiary Zones"),
       options = layersControlOptions(collapsed = FALSE)) %>%
+  addLegend("bottomright",
+            pal = bgpal,
+            values = bg$propPOC,
+            group = "US Census (Race)",
+            title = "People of Color (%)") %>%
+  addLegend("bottomright",
+            pal = bgincpal,
+            values = bg$medhhinc,
+            group = "US Census (Income)",
+            title = "Median Household Income") %>%
   addLegend("bottomright",
             pal = clpal,
             values = cl$conscat,
@@ -109,17 +144,18 @@ m <- leaflet() %>%
             values = buf$conscat,
             title = "Buffer Type",
             group = "Conservation Buffer Zones") %>%
-  # addLegend("bottomleft",
-  #           pal = bgpal,
-  #           values = bg$propPOC,
-  #           group = "US Census (Race)",
-  #           title = "People of Color (%)") %>%
-  hideGroup("Conservation Reserves") %>%
-  addScaleBar("bottomleft")
-m
+  hideGroup(c("Conservation Reserves", "Beneficiary Zones")) %>%
+  addScaleBar("bottomleft") %>%
+  htmlwidgets::onRender("
+    function(el, x) {
+      this.on('baselayerchange', function(e) {
+        e.layer.bringToBack();
+      })
+    }
+  ")
+#m
 
 ## exporting as html file for exploration
-library(htmlwidgets)
 saveWidget(m, 
            file="/Users/dhardy/Dropbox/r_data/easement-justice/lowcountry_conservation.html",
            title = "Analysis of Lowcountry Conservation")
