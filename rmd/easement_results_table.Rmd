@@ -32,12 +32,12 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 # Lowcountry EJ Results
 # --
 ### Table 1. Conservation Reserves by Data Source. 
-Square miles of conservation land with number of reserves in parentheses. All reported numbers are direct from data source, unfiltered and uncleaned with the only exception being clipping multipart polygons to the Lowcountry region. 
+Square miles of conservation land with number of reserves in parentheses. All reported numbers are unfilterd and direct from data source with the exception being multipart polygons clipped to the Lowcountry region. 
 ```{r, include = TRUE, echo=FALSE}
 
 df <- read.csv(file.path(datadir, 'cl-stats-unfiltered.csv'))[-1] %>%
   rename(area = acres) %>%
-  mutate(area = round(area * 3.86102e-7)) %>% ## m^2 to mi^2
+  mutate(area = round(area * 0.0015625)) %>% ## acres to mi^2
   mutate(GA.Pvt = ifelse(conscat == 'Private' & state == 'GA', area, NA),
          GA.Pub = ifelse(conscat == 'Public' & state == 'GA', area, NA),
          SC.Pvt = ifelse(conscat == 'Private' & state == 'SC', area, NA),
@@ -89,7 +89,7 @@ kable(df, format = "latex", booktabs = T, caption = NULL,
 ```
 
 ### Table 2. Demographic Comparison by Region. 
-Area and Beneficiary Population is total for Lowcountry subregions, but mean for private and public subregions. Results are from analysis with data filtered by source (i.e., Private is NCED in GA and SC-TNC in SC; Public is PAD-US for both states). Numbers shown are for the 16 km beneficiary zone and 320 m conservation reserve buffer zone pairing.
+Area and Beneficiary Population is total for Lowcountry region, but mean for private and public beneficiary zones. Results are from analysis with data filtered by source (i.e., Private is NCED in GA and SC-TNC in SC; Public is PAD-US for both states). Numbers shown are for the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing.
 ```{r include=TRUE, echo=FALSE}
 
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
@@ -97,7 +97,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
   # group_by(region) %>%
   mutate(id = if_else(region == "Lowcountry", 1, 
                       if_else(region == "South Carolina", 2, 3)),
-         area = area * 3.86102e-7) %>%
+         area = sqkm * 0.386102) %>%
   arrange(id, region, cat) %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
   select(region, cat:medhhinc)
@@ -108,7 +108,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = c('Region/Subregion', 'Area (mi^2)', 'Beneficiary\nPopulation', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
+         col.names = c('Region', 'Area (mi^2)', 'Beneficiary\nPopulation', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   pack_rows("Interstate", 1, 3) %>%

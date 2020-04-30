@@ -59,6 +59,7 @@ st_centroid(cabz) %>%
   select(rowid) %>%
   st_write(file.path(datadir, 'cabz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
+st_write(cabz, file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 
 ###################################################
@@ -180,11 +181,11 @@ ggplot(df, aes(x = emedhhinc, group = conscat)) +
 ## export data
 ##############################
 
-## export cabz as polygons
-df %>% st_write(file.path(datadir, 'cl_demg.geojson'), driver = 'geojson', delete_dsn = TRUE)
+## export cl-buf with demg data as polygons
+df %>% st_write(file.path(datadir, 'cl_buf_demg.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 ## export ONLY attribute data
 df %>%
   st_set_geometry(NULL) %>%
-  write.csv(file.path(datadir, 'cl_demg_data.csv'), row.names = FALSE)
+  write.csv(file.path(datadir, 'cl_buf_demg_data.csv'), row.names = FALSE)
 

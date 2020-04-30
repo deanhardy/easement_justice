@@ -107,7 +107,7 @@ bgc <- bg %>%
 fig2 <- 
   tm_shape(t1) + tm_borders(col = 'black', lwd = 2) +
   tm_shape(st) + tm_fill(col = 'white') +
-  tm_shape(bgc) + 
+  tm_shape(bgc) +
   tm_polygons(col = 'percPOC', palette = mycols, style = 'fisher', lwd = 0.2, title = 'People of Color (%)') +
   tm_shape(buf) +
   tm_fill(col = 'conscat', alpha = 1, palette = clr2,
@@ -125,7 +125,7 @@ fig2 <-
                 border.col = 'black',
                 labels = c('Private Easement', 'Public Reserve', 'Lowcountry'), 
                 col = clr2, 
-                title = "") +
+                title = "MAP KEY") +
   tm_legend(position = c(0.68, 0.04),
             bg.color = 'white',
             frame = TRUE,
@@ -139,8 +139,8 @@ fig2 <-
             asp=3/2)
 #fig2
 
-tiff(file.path(datadir, 'figures/pvt-demg-map.tiff'), units = 'in',
-     height = 4, width = 6, res = 300, compression = 'lzw')
+tiff(file.path(datadir, 'figures/fig1.tiff'), units = 'in',
+     height = 4, width = 6, res = 150, compression = 'lzw')
 fig2
 dev.off()
 
