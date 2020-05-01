@@ -19,7 +19,7 @@ datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 cons <- st_read(file.path(datadir, 'cl_bufs.geojson')) %>%
   rowid_to_column() %>%
   filter(buf_m == 320) %>%
-  st_transform(crs = alb) %>%
+  st_transform(crs = utm) %>%
   st_centroid()
 
 ## import census data
@@ -29,13 +29,13 @@ bg <- st_read(file.path(datadir, "bg_demg.geojson"), stringsAsFactors = FALSE) %
                           ifelse(STATEFP == 12, 13, 
                                  ifelse(STATEFP == 1, 13, STATEFP))))%>%
   filter(statefp != 'NA') %>%
-  st_transform(crs = alb)
+  st_transform(crs = utm)
 
 lc <- st_read(file.path(datadir, 'lc_tier1/lc_tier1.shp'), stringsAsFactors = FALSE) %>%
-  st_transform(crs = alb)
+  st_transform(crs = utm)
 
 box <- st_bbox(cons)
 
 c2 <- st_union(cons)
 
-vo <- st_voronoi(c2, box)
+vo <- st_voronoi(c2)

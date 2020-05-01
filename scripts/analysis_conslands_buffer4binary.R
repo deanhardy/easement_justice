@@ -103,55 +103,12 @@ cl_buf2 <- merge(cl2, int, all = TRUE)
 cl_buf2 %>% st_as_sf() %>% st_transform(4326) %>%
   st_write(file.path(datadir, 'cl_bufs.geojson'), delete_dsn=TRUE)
 
-#########################
-## leaflet map
-#########################
-library(leaflet)
-library(leaflet.extras)
-
 pvt2 <- st_cast(pvt, 'POLYGON') %>% st_transform(4326)
 pub2 <- st_cast(pub, 'POLYGON') %>% st_transform(4326)
-buf <- cl_buf %>% st_as_sf() %>% st_transform(4326)
 
 pvt2 %>%
   st_write(file.path(datadir, 'pvt.geojson'), driver = 'geojson')
 pub2 %>%
   st_write(file.path(datadir, 'pub.geojson'), driver = 'geojson')
 
-pal <- colorFactor(rainbow(7), buf$buf_m)
-
-m <- leaflet() %>%
-  addTiles(group = "Open Street Map") %>%
-  setView(lng = -81, lat = 33, zoom = 7) %>%
-  addSearchOSM(options = searchOptions(autoCollapse = TRUE, minLength = 2)) %>%
-  addPolygons(data = buf, 
-              color = ~pal(buf$buf_m),
-              fillOpacity = 0.5,
-              weight = 1, 
-              group = "Buffer Zones") %>%
-  addPolygons(data = pub2,
-              group = "Public Reserves",
-              fillColor = 'green',
-              fillOpacity = 0.5,
-              weight = 1) %>%
-  addPolygons(data = pvt2,
-              group = "Private Reserves",
-              fillColor = 'red',
-              fillOpacity = 0.5,
-              weight = 1) %>%
-  addLayersControl(baseGroups = c("Open Street Map"), 
-                   overlayGroups = c("Private Reserves", "Public Reserves", "Buffer Zones"),
-                   options = layersControlOptions(collapsed = TRUE)) %>%
-  addLegend("bottomright",
-            pal = pal,
-            values = buf$buf_m,
-            title = "Buffer Zone") %>%
-  addScaleBar("bottomright")
-m
-
-## exporting as html file for exploration
-# library(htmlwidgets)
-# saveWidget(m, 
-#            file="/Users/dhardy/Dropbox/r_data/easement-justice/cl_bufferzones.html",
-#            title = "Buffer Zones")
 

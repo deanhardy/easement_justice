@@ -4,7 +4,9 @@ library(tidyverse)
 library(sf)
 library(lwgeom)
 library(tidycensus)
+library(tigris)
 options(tigris_use_cache = TRUE)
+options(tigris_class = "sf")
 
 ## define variables
 utm <- 2150 ## NAD83 17N
@@ -31,6 +33,13 @@ bg <- st_read(file.path(datadir, "bg_demg.geojson"), stringsAsFactors = FALSE) %
                                  ifelse(STATEFP == 1, 13, STATEFP))))%>%
   filter(statefp != 'NA') %>%
   st_transform(crs = alb)
+
+urb <- urban_areas(cb = TRUE, year = 2018) %>%
+  st_as_sf() %>%
+  st_transform(crs = alb) %>%
+  filter(UATYP10 == 'U' & st_intersects(st_union(bg), ., sparse = F))
+
+# tm_shape(urb) + tm_fill(fill = 'grey') + tm_shape(cons2) + tm_polygons(fill = 'urban')
 
 ## for each buffered conservation reserve create a beneficiary zone (BZONE) around it
 # for demographic analysis
@@ -169,14 +178,17 @@ emed <- bg2 %>%
 
 ## merge emedian hh income with other demographic data
 df <- cabz_demo2 %>% 
-  merge(emed, by = "rowid") %>%
-  st_transform(4326) 
-# filter(state %in% c('GA', 'SC'))
+  merge(emed, by = "rowid") 
 
 # density plot
 ggplot(df, aes(x = emedhhinc, group = conscat)) +
   geom_density(aes(color = conscat)) +
   theme_bw()
+
+## connect to urban areas
+df <- df %>%
+  mutate(urban = if_else(st_contains(st_union(urb), ., sparse = F) == TRUE, 'yes', 'no')) %>%
+  st_transform(4326) 
 
 ##############################
 ## export data
