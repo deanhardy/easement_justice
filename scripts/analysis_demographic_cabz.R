@@ -59,7 +59,8 @@ st_centroid(cabz) %>%
   select(rowid) %>%
   st_write(file.path(datadir, 'cabz_cntrd.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
-st_write(cabz, file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
+cabz %>% st_transform(4326) %>% 
+st_write(file.path(datadir, 'cabz.geojson'), driver = 'geojson', delete_dsn = TRUE)
 
 
 ###################################################
