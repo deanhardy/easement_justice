@@ -26,20 +26,25 @@ buf <- st_read(file.path(datadir, 'cl_buf_demg.geojson')) %>%
 bz <- st_read(file.path(datadir, 'cabz.geojson')) %>%
   filter(buf_m == 320 & bzone_m == 16000) 
 
+## union ben zones for clipping bg data (maybe)
+bzone <- bz %>%
+  st_make_valid() %>%
+  st_union()
+
 ## import block group data
 bg <- st_read(file.path(datadir, 'bg_demg.geojson'))%>%
   filter(st_intersects(t1, ., sparse = F)) %>%
-  mutate(popden = total/sqkm_bg)
+  mutate(popden = total/sqkm_bg, pblack = black/total)
 
 # set color schemes
 clpal <- colorFactor(c('darkorchid4', 'darkgreen'), cl$conscat)
 bufpal <- colorFactor(c('darkorchid1', 'green'), buf$conscat)
 bzpal <- colorFactor(c('darkorchid1', 'green'), bz$conscat)
 # bgpal <- colorFactor(gray.colors(5, start = 0.3, end = 0.9, gamma = 1, rev = TRUE), bg$propPOC)
-bgpal <- colorQuantile("Greens", bg$propPOC, n = 3)
-bgdenpal <- colorQuantile("Reds", bg$popden, n = 3)
-bgincpal <- colorQuantile("Blues", bg$medhhinc, n = 3)
-bgmhvpal <- colorQuantile("Oranges", bg$mhv, n = 3)
+bgpal <- colorQuantile("Greens", bg$pblack, n = 4)
+bgdenpal <- colorQuantile("Reds", bg$popden, n = 4)
+bgincpal <- colorQuantile("Blues", bg$medhhinc, n = 4)
+bgmhvpal <- colorQuantile("Oranges", bg$mhv, n = 4)
 
 
 # make leaflet map
@@ -64,9 +69,9 @@ m <- leaflet() %>%
                             "White (%):", round(100*(bg$white/bg$total), 0), "<br>",
                             "Median HH Income (US$):", round(bg$medhhinc, 0), "<br>",
                             "Mean HH Income (US$):", round(bg$mnhhinc, 0)),
-              group = "US Census (POC)",
+              group = "US Census (Black folk)",
               color = 'black',
-              fillColor = ~bgpal(bg$propPOC),
+              fillColor = ~bgpal(bg$pblack),
               fillOpacity = 1,
               weight = 0.5) %>%
   addPolygons(data = bg,
@@ -159,14 +164,14 @@ m <- leaflet() %>%
               color = 'black',
               fillOpacity = 1,
               weight = 1) %>%
-  addLayersControl(baseGroups = c("US Census (POC)", "US Census (Income)", "US Census (MHV)", "US Census (Density)"), 
+  addLayersControl(baseGroups = c("US Census (Black folk)", "US Census (Income)", "US Census (MHV)", "US Census (Density)"), 
       overlayGroups = c("Conservation Buffer Zones", "Conservation Reserves", "Beneficiary Zones"),
       options = layersControlOptions(collapsed = FALSE)) %>%
   addLegend("bottomright",
             pal = bgpal,
-            values = bg$propPOC,
-            group = "US Census (POC)",
-            title = "People of Color (%)") %>%
+            values = bg$pblack,
+            group = "US Census (Black folk)",
+            title = "Black (%)") %>%
   addLegend("bottomright",
             pal = bgdenpal,
             values = bg$popden,
