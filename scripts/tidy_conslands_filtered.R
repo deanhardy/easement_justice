@@ -29,7 +29,15 @@ lc_tier1 <- st_read(file.path(datadir, "lc/lc_tier1.shp")) %>%
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## assuming NAs and unknowns are PRIVATE (need to revise later)
 ## DO NOT SHARE DATA
-tnc <- st_read(file.path(datadir, "tnc/tnc.shp")) %>%
+tnc <- st_read(file.path(datadir, "tnc/tnc.shp"))
+  
+tnc %>% 
+  st_set_geometry(NULL) %>%
+  dplyr::select(NCED) %>% 
+  group_by(NCED) %>% 
+  summarise(count = n())
+
+tnc <- tnc %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'tnc', acres = as.numeric(st_area(geometry) * 0.00024710538), 
          purpose = PurposeCde, state = 'SC', gap = 'NA') %>%
@@ -66,7 +74,11 @@ tnc <- st_read(file.path(datadir, "tnc/tnc.shp")) %>%
 # tnc_p <- rasterToPolygons(tnc_r)
 
 ## import NCED data for coastal plain (lc tier 3) region in SC & GA
-nced <- st_read(file.path(datadir, "nced/nced.shp")) %>%
+nced <- st_read(file.path(datadir, "nced/nced.shp")) 
+
+nced %>% st_geometry(NULL) %>% write.csv(file.path(datadir, 'nced.csv'))
+
+nced <- nced %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'nced', acres = as.numeric(st_area(geometry) * 0.00024710538)) %>%
   dplyr::select(id, owntype, eholdtype, esmthldr, sitename, pubaccess, state, 
