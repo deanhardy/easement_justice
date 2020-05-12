@@ -36,6 +36,17 @@ cl_demg <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
             propPOC = mean(propPOC), medhhinc = mean(medhhinc), ) %>%
   as.data.frame()
 
+## GA and SC reserve data by urban
+cl_demg_urb <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
+  filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
+  rename(cat = conscat, medhhinc = emedhhinc) %>%
+  mutate(urban_cat = urban, urban = if_else(urban == 'yes', 1, 0)) %>%
+  select(cat, urban_cat, sqkm_bz, tot_pop, popden, urban, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
+  group_by(cat, urban_cat) %>%
+  summarise(sqkm = mean (sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
+            propPOC = mean(propPOC), medhhinc = mean(medhhinc), ) %>%
+  as.data.frame()
+
 ## combine GA and SC reserve data
 cl_demg_entire <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
@@ -65,6 +76,8 @@ df2 <- rbind(cl_demg, cl_demg_entire)
 df3 <- rbind(df2, lc)
 
 df4 <- rbind(df3, lc_entire)
+
+df5 <- rbind(df4, cl_demg_urb)
 
 df5 <- df4 %>%
   as.data.table() %>%
