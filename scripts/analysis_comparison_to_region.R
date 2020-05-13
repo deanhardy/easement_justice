@@ -40,9 +40,9 @@ cl_demg <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
 cl_demg_urb <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
   filter(buf_m == 320 & bzone_m == 16000 & statefp != 'NA') %>% 
   rename(cat = conscat, medhhinc = emedhhinc) %>%
-  mutate(urban_cat = urban, urban = if_else(urban == 'yes', 1, 0)) %>%
-  select(cat, urban_cat, sqkm_bz, tot_pop, popden, urban, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
-  group_by(cat, urban_cat) %>%
+  mutate(statefp = if_else(urban == 'yes', 'Urban', 'Rural'), urban = if_else(urban == 'yes', 1, 0)) %>%
+  select(cat, statefp, sqkm_bz, tot_pop, popden, urban, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
+  group_by(cat, statefp) %>%
   summarise(sqkm = mean (sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
             propPOC = mean(propPOC), medhhinc = mean(medhhinc), ) %>%
   as.data.frame()
@@ -79,11 +79,11 @@ df4 <- rbind(df3, lc_entire)
 
 df5 <- rbind(df4, cl_demg_urb)
 
-df5 <- df4 %>%
+df6 <- df5 %>%
   as.data.table() %>%
   select(cat:medhhinc) %>%
   mutate(region = if_else(statefp == 45, 'South Carolina', 
-                         if_else(statefp == 13, 'Georgia', 'Lowcountry')),
+                         if_else(statefp == 13, 'Georgia', statefp)),
          sqkm = round(sqkm, 0),
          tot_pop = round(tot_pop, 0),
          popden = round(popden, 0),
@@ -95,5 +95,5 @@ df5 <- df4 %>%
          medhhinc = round(medhhinc, 0)) %>%
   select(-statefp)
 
-write.csv(df5, file.path(datadir, 'regional-comparison.csv'))
+write.csv(df6, file.path(datadir, 'regional-comparison.csv'))
 
