@@ -1,0 +1,337 @@
+##  Workin' on Dean's easements, again....
+##
+##
+##
+##  06 aug 2019; 12 may 2020
+######################################
+
+##  See file '/home/nuse/helping_folks/Dean_easements/call_09may2019'
+##  This dataset came with Dean's email of 20apr2020:
+
+
+ease <- read.csv('/home/nuse/helping_folks/Dean_easements/outside_git/cl_buf_demg_data.csv', stringsAsFactors = F)
+
+dim(ease)
+#[1] 9274   22
+
+
+cbind(names(ease))
+#      [,1]       
+# [1,] "rowid"    
+# [2,] "conscat"  
+# [3,] "bzone_m"   --  radius of 'beneficiary zone' 
+# [4,] "buf_m"     -- buffers around parcels: if these overlap, the two parcels were combined into one unit.
+# [5,] "tot_pop"  
+# [6,] "popden"   
+# [7,] "sqkm_bz"  
+# [8,] "pland"    
+# [9,] "pwhite"   
+#[10,] "white"    
+#[11,] "pblack"   
+#[12,] "black"    
+#[13,] "pother"   
+#[14,] "other"    
+#[15,] "platinx"  
+#[16,] "latinx"   
+#[17,] "propPOC"  
+#[18,] "hu"        -- housing units
+#[19,] "mnhhinc"  
+#[20,] "statefp"  
+#[21,] "emedhhinc"
+#[22,] "urban"    
+
+
+
+u <- sort(unique(ease$buf_m))
+#[1]  40  80 120 160 240 320 480
+
+
+#unique(ease$bzone_m)
+#[1] 24000 16000  8000
+
+
+#(tab <- with(ease, table(cat, buf_m, bzone_m)))
+
+#, , bzone_m = 8000
+
+#         buf_m
+#cat         40   80  120  160  240  320  480
+#  Private  703    0    0    0    0    0    0
+#  Public  1118    0    0    0    0    0    0
+
+#, , bzone_m = 16000
+
+#         buf_m
+#cat         40   80  120  160  240  320  480
+#  Private    0  624    0  544    0  453    0
+#  Public     0  959    0  792    0  600    0
+
+#, , bzone_m = 24000
+
+#         buf_m
+#cat         40   80  120  160  240  320  480
+#  Private    0    0  580    0  490    0  396
+#  Public     0    0  858    0  684    0  474
+
+
+
+###  Not all combinations of the two factors are used:
+#levs <- with(ease, table(buf_m, bzone_m))
+
+#     bzone_m
+#     bzone_m
+#buf_m 8000 16000 24000
+#  40  1821     0     0
+#  80     0  1583     0
+#  120    0     0  1437
+#  160    0  1338     0
+#  240    0     0  1173
+#  320    0  1053     0
+#  480    0     0   869
+
+
+
+####  OK, so we really only need to cycle through [buf_m], then just remember that:
+#[buf_m] = 40 => [bzone_m] = 8000
+#[buf_m] %in% c(80,160,320) => [bzone_m] = 16000   
+#[buf_m] %in% c(120,240,480) => [bzone_m] = 24000
+
+
+###############  01 may 2020-----------------------------------------------
+
+##  Maybe I'm going in circles, but if the real focus here is on propPOC, why not just do an ANOVA with that as response, and the other continuous covariates as predictors?
+#library(lme4)
+vars <- c("pblack", "sqkm_bz", "popden", "emedhhinc", "pland")
+#b <- 40
+#sc <- data.frame(cat = ease$cat[ease$buf_m == b],  state = ease$state[ease$buf_m == b], scale(ease[ease$buf_m == b, vars]))
+
+#aov.l <- sapply(u, FUN = function (s) { lmer(propPOC ~ cat + sqkm + popden + medhhinc + (1 | state), data = data.frame(cat = ease$cat[ease$buf_m == s],  state = ease$state[ease$buf_m == s], scale(ease[ease$buf_m == s, vars]))) })
+#names(aov.l) <- paste0("buf_m = ", u)
+
+#### print results:
+#lapply(aov.l, FUN = summary)
+
+#### whoops, latter two buf_m values lead to overfit models:
+#of <- lapply(aov.l, FUN = isSingular)
+
+#### so these look more valid:
+#ok.aov.l <- aov.l[!unlist(of)]
+#lapply(ok.aov.l, FUN = summary)
+
+
+### check correlations:
+cor.l1 <- lapply(u, FUN = function (s) { cor(ease[ease$buf_m == s, vars]) })
+###  looks good: pblack and emedhhinc are correlated > 0.6, but that's alright, as they will always be on different sides of the equals sign.
+###  oh, but: popden and emedhhinc are pretty close, 0.58 sometimes.
+
+###  what about correlations with cat or state?
+cor.cat <- lapply(u, FUN = function (s) {
+  df <- data.frame(cat = ease$conscat[ease$buf_m == s],  state = ease$state[ease$buf_m == s], ease[ease$buf_m == s, vars])
+  lst <- lapply(vars, FUN = function (i) {
+    form <- formula(paste(i, "~ cat"))
+    t.test(form, data = df) })
+  data.frame(t(sapply(lst, FUN = `[`, c("data.name","p.value", "estimate"))))
+  })
+
+cor.state <- lapply(u, FUN = function (s) {
+  df <- data.frame(cat = ease$cat[ease$buf_m == s],  state = ease$state[ease$buf_m == s], ease[ease$buf_m == s, vars])
+  lst <- lapply(vars, FUN = function (i) {
+    form <- formula(paste(i, "~ state"))
+    t.test(form, data = df) })
+  data.frame(t(sapply(lst, FUN = `[`, c("data.name","p.value", "estimate"))))
+  })
+
+cor.urb <- lapply(u, FUN = function (s) {
+  df <- data.frame(urban = ease$urban[ease$buf_m == s],  state = ease$state[ease$buf_m == s], ease[ease$buf_m == s, vars])
+  lst <- lapply(vars, FUN = function (i) {
+    form <- formula(paste(i, "~ urban"))
+    t.test(form, data = df) })
+  data.frame(t(sapply(lst, FUN = `[`, c("data.name","p.value", "estimate"))))
+  })
+
+  
+#
+#+ I(pland^2),
+#data.frame(cat = ease$cat[ease$buf_m == s],  state = ease$state[ease$buf_m == s], scale(ease[ease$buf_m == s, vars])))
+### but nah, state should just be a fixed effect!?  It's really a spatial block, so ought to be random?  Buuut, according to above exercise, it seems highly related to the other, continuous covariates; so it's not fair to include it, really. 
+lm.l1 <- lapply(u, FUN = function (s) { lm(pblack ~ conscat + popden*emedhhinc + pland,  data = ease[ease$buf_m == s,]) })
+#lm.l1w <- lapply(u, FUN = function (s) { lm(pblack ~ cat + popden*medhhinc + pland,  data = ease[ease$buf_m == s,], weights = {tmp <- ease$tot_pop[ease$buf_m == s]; tmp/max(tmp)}) })
+names(lm.l1) <- paste0("buf_m = ", u)
+aov.l1 <- lapply(lm.l1, FUN = aov)
+aic.l1 <- sapply(lm.l1, FUN = AIC)
+lapply(aov.l1, FUN = summary)
+lapply(lm.l1, FUN = summary)
+
+
+### now try switching medhhinc and pblack:
+lm.l2 <- lapply(u, FUN = function (s) { lm(emedhhinc ~ conscat + popden*pblack + pland,  data = ease[ease$buf_m == s,]) })
+names(lm.l2) <- paste0("buf_m = ", u)
+aov.l2 <- lapply(lm.l2, FUN = aov)
+aic.l2 <- sapply(lm.l2, FUN = AIC)
+lapply(aov.l2, FUN = summary)
+lapply(lm.l2, FUN = summary)
+
+lm.l3 <- lapply(u, FUN = function (s) { lm(pblack ~ conscat + urban,  data = ease[ease$buf_m == s,]) })
+names(lm.l3) <- paste0("buf_m = ", u)
+aov.l3 <- lapply(lm.l3, FUN = aov)
+aic.l3 <- sapply(lm.l3, FUN = AIC)
+lapply(aov.l3, FUN = summary)
+lapply(lm.l3, FUN = summary)
+
+lm.l4 <- lapply(u, FUN = function (s) { lm(emedhhinc ~ conscat + urban,  data = ease[ease$buf_m == s,]) })
+names(lm.l4) <- paste0("buf_m = ", u)
+aov.l4 <- lapply(lm.l4, FUN = aov)
+aic.l4 <- sapply(lm.l4, FUN = AIC)
+lapply(aov.l4, FUN = summary)
+lapply(lm.l4, FUN = summary)
+
+###  aic tables:
+### pblack:
+aic.pblack <- cbind(aic.l1, aic.l3)
+
+### emedhhinc:
+aic.hhinc <- cbind(aic.l2, aic.l4)
+
+
+
+
+###################################################
+# 13 May 2020
+#  Try restricting lm.l1 and lm.l2 models above, to non-urban areas only:
+ease.nu <- ease[ease$urban == "no", ]
+
+lm.nu1 <- lapply(u, FUN = function (s) { lm(pblack ~ conscat + popden*emedhhinc + pland,  data = ease.nu[ease.nu$buf_m == s,]) })
+#lm.l1w <- lapply(u, FUN = function (s) { lm(pblack ~ cat + popden*medhhinc + pland,  data = ease[ease$buf_m == s,], weights = {tmp <- ease$tot_pop[ease$buf_m == s]; tmp/max(tmp)}) })
+names(lm.nu1) <- paste0("buf_m = ", u)
+aov.nu1 <- lapply(lm.nu1, FUN = aov)
+aic.nu1 <- sapply(lm.nu1, FUN = AIC)
+lapply(aov.nu1, FUN = summary)
+lapply(lm.nu1, FUN = summary)
+
+
+### now try switching medhhinc and pblack:
+lm.nu2 <- lapply(u, FUN = function (s) { lm(emedhhinc ~ conscat + popden*pblack + pland,  data = ease.nu[ease.nu$buf_m == s,]) })
+names(lm.nu2) <- paste0("buf_m = ", u)
+aov.nu2 <- lapply(lm.nu2, FUN = aov)
+aic.l2nu2<- sapply(lm.nu2, FUN = AIC)
+lapply(aov.nu2, FUN = summary)
+lapply(lm.nu2, FUN = summary)
+
+
+### scaling info:
+#pblack.scl <- t(sapply(u, FUN = function (s) { tmp <- ease$pblack[ease$buf_m == s]; c(mean(tmp), sd(tmp)) }))
+#rownames(pblack.scl) <- u
+#colnames(pblack.scl) <- c("mean", "sd")
+
+
+### pblack as response:
+cat.est1 <- cbind(u, t(sapply(aov.l1, FUN = function (mod) {TukeyHSD(mod, which = "conscat")$conscat })))
+rownames(cat.est1) <- NULL
+colnames(cat.est1)  <- c("buf_m", "Public-Private", "lwr", "upr", "p_adj")
+
+
+### medhhinc as response:
+cat.est2 <-  cbind(u, t(sapply(aov.l2, FUN = function (mod) {TukeyHSD(mod, which = "conscat")$conscat })))
+rownames(cat.est2) <- NULL
+colnames(cat.est2)  <- c("buf_m", "Public-Private", "lwr", "upr", "p_adj")
+
+
+### pblack as response:
+cat.est3 <-  cbind(u, t(sapply(aov.l3, FUN = function (mod) {TukeyHSD(mod, which = "conscat")$conscat })))
+rownames(cat.est3) <- NULL
+colnames(cat.est3)  <- c("buf_m", "Public-Private", "lwr", "upr", "p_adj")
+
+
+### medhhinc as response:
+cat.est4 <-  cbind(u, t(sapply(aov.l4, FUN = function (mod) {TukeyHSD(mod, which = "conscat")$conscat })))
+rownames(cat.est4) <- NULL
+colnames(cat.est4)  <- c("buf_m", "Public-Private", "lwr", "upr", "p_adj")
+
+### pblack as response:
+cat.nu1 <-  cbind(u, t(sapply(aov.nu1, FUN = function (mod) {TukeyHSD(mod, which = "conscat")$conscat })))
+rownames(cat.nu1) <- NULL
+colnames(cat.nu1)  <- c("buf_m", "Public-Private", "lwr", "upr", "p_adj")
+
+
+### medhhinc as response:
+cat.nu2 <-  cbind(u, t(sapply(aov.nu2, FUN = function (mod) {TukeyHSD(mod, which = "conscat")$conscat })))
+rownames(cat.nu2) <- NULL
+colnames(cat.nu2)  <- c("buf_m", "Public-Private", "lwr", "upr", "p_adj")
+
+
+
+
+
+col.v <- c("green3", "darkorange", "blue", "darkorange", "blue", "darkorange", "blue")
+pch.v <- c(24, 21, 22, 21, 22, 21, 22)
+
+png(file = "/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/effects_profile.png", width = 7, height = 10, units = "in", res = 400)
+#x11(width = 7, height = 10)
+
+par(mfcol = c(2,1), mar = c(0,4,1,1), oma = c(4,0,0,0))
+
+plot(type = "n", x = u, y = cat.est1[,"Public-Private"], ylim = range(cat.est1[,c("lwr","upr")]), xaxt = "n", ylab = "Difference, proportion black")
+abline(h = pretty(range(cat.est1[,c("lwr","upr")])), col = "grey90")
+points(x = u, y = cat.est1[,"Public-Private"], col = col.v, bg = col.v, pch = pch.v, cex = 1.5)
+segments(x0 = cat.est1[,"buf_m"], y0 = cat.est1[,"lwr"], y1 = cat.est1[,"upr"], col = col.v, lwd = 1.5)
+d <- par("usr")
+text(x = d[1] + 0.9*(d[2] - d[1]), y = d[3] + 0.9*(d[4] - d[3]), labels = "A", font = 2, cex = 2, pos = 4)
+ 
+plot(type = "n", x = u, y = cat.est2[,"Public-Private"], ylim = range(cat.est2[,c("lwr","upr")]), xaxt = "n", ylab = "Difference, median household income (dollars)")
+abline(h = pretty(range(cat.est2[,c("lwr","upr")])), col = "grey90")
+points(x = u, y = cat.est2[,"Public-Private"], col = col.v, bg = col.v, pch = pch.v, cex = 1.5)
+segments(x0 = cat.est2[,"buf_m"], y0 = cat.est2[,"lwr"], y1 = cat.est2[,"upr"], col = col.v, lwd = 1.5)
+d <- par("usr")
+text(x = d[1] + 0.9*(d[2] - d[1]), y = d[3] + 0.9*(d[4] - d[3]), labels = "B", font = 2, cex = 2, pos = 4)
+
+axis(side = 1, at = u, outer = T)
+legend(x = d[1] + 0.6*(d[2] - d[1]), y = d[3] + 0.3*(d[4] - d[3]), legend = c(8,16,24), title = "Benefit zone radius (km)", pch = pch.v, col = col.v, pt.bg = col.v, pt.cex = 1.5, lwd = 1.5, bg = "white")
+mtext(outer = T, side = 1, line = 3, text = "Merge buffer radius (m)")
+dev.off()
+
+#     bzone_m
+#buf_m 8000 16000 24000
+#  40  1821     0     0
+#  80     0  1583     0
+#  120    0     0  1438
+#  160    0  1336     0
+#  240    0     0  1174
+#  320    0  1053     0
+#  480    0     0   870
+
+
+
+#####  With 'Urban == "Yes"' rows removed:
+col.v <- c("green3", "darkorange", "blue", "darkorange", "blue", "darkorange", "blue")
+pch.v <- c(24, 21, 22, 21, 22, 21, 22)
+
+png(file = "/home/nuse/helping_folks/Dean_easements/git/easement_justice/figs/effects_profile_noUrban.png", width = 7, height = 10, units = "in", res = 400)
+#x11(width = 7, height = 10)
+
+par(mfcol = c(2,1), mar = c(0,4,1,1), oma = c(4,0,0,0))
+
+plot(type = "n", x = u, y = cat.nu1[,"Public-Private"], ylim = range(cat.nu1[,c("lwr","upr")]), xaxt = "n", ylab = "Difference, proportion black")
+abline(h = pretty(range(cat.nu1[,c("lwr","upr")])), col = "grey90")
+points(x = u, y = cat.nu1[,"Public-Private"], col = col.v, bg = col.v, pch = pch.v, cex = 1.5)
+segments(x0 = cat.nu1[,"buf_m"], y0 = cat.nu1[,"lwr"], y1 = cat.nu1[,"upr"], col = col.v, lwd = 1.5)
+d <- par("usr")
+text(x = d[1] + 0.9*(d[2] - d[1]), y = d[3] + 0.9*(d[4] - d[3]), labels = "A", font = 2, cex = 2, pos = 4)
+ 
+plot(type = "n", x = u, y = cat.nu2[,"Public-Private"], ylim = range(cat.nu2[,c("lwr","upr")]), xaxt = "n", ylab = "Difference, median household income (dollars)")
+abline(h = pretty(range(cat.nu2[,c("lwr","upr")])), col = "grey90")
+points(x = u, y = cat.nu2[,"Public-Private"], col = col.v, bg = col.v, pch = pch.v, cex = 1.5)
+segments(x0 = cat.nu2[,"buf_m"], y0 = cat.nu2[,"lwr"], y1 = cat.nu2[,"upr"], col = col.v, lwd = 1.5)
+d <- par("usr")
+text(x = d[1] + 0.9*(d[2] - d[1]), y = d[3] + 0.9*(d[4] - d[3]), labels = "B", font = 2, cex = 2, pos = 4)
+
+axis(side = 1, at = u, outer = T)
+legend(x = d[1] + 0.6*(d[2] - d[1]), y = d[3] + 0.3*(d[4] - d[3]), legend = c(8,16,24), title = "Benefit zone radius (km)", pch = pch.v, col = col.v, pt.bg = col.v, pt.cex = 1.5, lwd = 1.5, bg = "white")
+mtext(outer = T, side = 1, line = 3, text = "Merge buffer radius (m)")
+dev.off()
+
+
+
+x-special/nautilus-clipboard
+copy
+file:///home/nuse/helping_folks/Dean_easements/git/easement_justice
+
