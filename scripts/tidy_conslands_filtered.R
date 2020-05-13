@@ -31,16 +31,22 @@ lc_tier1 <- st_read(file.path(datadir, "lc/lc_tier1.shp")) %>%
 ## DO NOT SHARE DATA
 tnc <- st_read(file.path(datadir, "tnc/tnc.shp"))
   
-tnc %>% 
+tnc_x_nced <- tnc %>% 
   st_set_geometry(NULL) %>%
   dplyr::select(NCED) %>% 
   group_by(NCED) %>% 
   summarise(count = n())
 
+tnc_access <- tnc %>% 
+  st_set_geometry(NULL) %>%
+  dplyr::select(PubAccess) %>% 
+  group_by(PubAccess) %>% 
+  summarise(count = n())
+
 tnc <- tnc %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'tnc', acres = as.numeric(st_area(geometry) * 0.00024710538), 
-         purpose = PurposeCde, state = 'SC', gap = 'NA') %>%
+         purpose = 'NA', state = 'SC', gap = PurposeCde) %>%
   dplyr::select(id, OwnType, HoldType, EsmtHldr, SiteName, PubAccess, state,
                 acres, gap, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
   rename(owntype = OwnType,
@@ -127,8 +133,20 @@ dat2 <- dat %>%
   group_by(source, orig_id) %>%
   summarise(state = first(state), owntype = first(owntype), mgmttype = first(mgmttype),
             management = first(management), sitename = first(sitename),
-            acres = sum(acres), gap = first(gap), purpose = first(purpose),
+            acres = sum(acres), gap = first(gap), access = first(access), purpose = first(purpose),
             ecorg_tier = first(ecorg_tier), conscat = first(conscat))
+
+dat2_access <- dat2 %>% 
+  st_set_geometry(NULL) %>%
+  dplyr::select(access) %>% 
+  group_by(source, access) %>% 
+  summarise(count = n())
+
+dat2_gap <- dat2 %>% 
+  st_set_geometry(NULL) %>%
+  dplyr::select(gap) %>% 
+  group_by(source, gap) %>% 
+  summarise(count = n())
 
 ## summary descriptive stats
 df_sum <- dat2 %>%
