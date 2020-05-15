@@ -108,7 +108,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Square Miles', 'Beneficiary Population', 'Population Density', 'Urban Reserves', 'White (%)', 'Black (%)', 'Median Income ($US)')
+COLNAMES = c("Region", 'Square Miles', 'Beneficiary Population', 'Population Density', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Median Income ($US)')
 
 # LaTeX Table
 df2 %>%
@@ -133,25 +133,26 @@ Area and Beneficiary Population is total for Lowcountry region, but mean for pri
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
   filter(!(region %in% c("Georgia", "South Carolina"))) %>%
   # group_by(region) %>%
+  rename(reserves = urban) %>%
   mutate(id = if_else(cat == "Lowcountry", 1, 
                       if_else(region == "Private", 2, 3)),
          area = sqkm * 0.386102,
          popden = round(popden * 0.386102, 0)) %>%
-  mutate(urban = ifelse(is.na(urban), '159', urban)) %>%
   arrange(id, cat, region) %>%
-  # mutate(urban = if_else(filter(region == 'Lowcountry') %>% is.na(urban), .$urban[2] + .$urban[3], urban)) %>%
-  # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
+  mutate(reserves = ifelse(is.na(reserves), '1053', 
+                           ifelse(region == "Lowcountry" & cat == "Private", .$reserves[3]+.$reserves[4],
+                                  ifelse(region == "Lowcountry" & cat == "Public", .$reserves[6]+.$reserves[7], reserves)))) %>%
   select(region, cat:pblack, medhhinc)
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Square Miles', 'Beneficiary Population', 'Population Density', 'Urban Reserves', 'White (%)', 'Black (%)', 'Median Income ($US)')
+COLNAMES = c("Region", 'Square Miles', 'Beneficiary Population', 'Population Density', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income ($US)')
 
 # LaTeX Table
 df2 %>%
   select(-cat) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = COLNAMES) %>%
+         col.names = COLNAMES, align = c('lrrrrrrr')) %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   pack_rows("Lowcountry", 1, 1) %>%
@@ -168,14 +169,15 @@ Area and Beneficiary Population is total for Lowcountry region, but mean for pri
 ```{r include=TRUE, echo=FALSE}
 
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
-  filter(cat != 'State') %>%
-  # group_by(region) %>%
+  filter(!(region %in% c('Rural', 'Urban'))) %>%
   mutate(id = if_else(region == "Lowcountry", 1, 
                       if_else(region == "South Carolina", 2, 3)),
          area = sqkm * 0.386102,
          popden = round(popden * 0.386102), 0) %>%
   arrange(id, region, cat) %>%
-  # mutate(urban = if_else(filter(region == 'Lowcountry') %>% is.na(urban), .$urban[2] + .$urban[3], urban)) %>%
+  mutate(urban = ifelse(region == 'Lowcountry' & cat == 'Lowcountry', .$urban[2]+.$urban[3],
+                        ifelse(region == 'South Carolina' & cat == 'Lowcountry', .$urban[5]+.$urban[6],
+                               ifelse(region == 'Georgia' & cat == 'Lowcountry', .$urban[8]+.$urban[9], urban)))) %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
   select(region, cat:medhhinc)
 
@@ -185,7 +187,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = c('Region', 'Square Miles', 'Beneficiary Population', 'Population Density', 'Urban Reserves', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
+         col.names = c('Region', 'Square Miles', 'Beneficiary Population', 'Population Density', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   pack_rows("Interstate", 1, 3) %>%
