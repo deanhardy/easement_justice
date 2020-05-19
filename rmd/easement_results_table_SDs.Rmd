@@ -1,16 +1,11 @@
 ---
-title: ""
-output: 
+title: ''
+output:
+  word_document: default
   pdf_document:
-    fig_caption: false
+    fig_caption: no
     keep_tex: yes
 classoption: landscape
-# fontfamily: mathpazo
-# fontsize: 16pt
-# header-includes:
-#   - \usepackage{titling}
-#   - \pretitle{\begin{flushleft}}
-#   - \posttitle{\end{flushleft}}
 ---
 
 ```{r setup, include=FALSE}
@@ -70,10 +65,10 @@ df <- read.csv(file.path(datadir, 'cl-stats-unfiltered.csv'))[-1] %>%
 df[3,2] <- paste("--")
 df[3,4] <- paste("--")
 
-df[3,3] <- paste("**",df[3,3],"**", sep = "")
-df[2,4] <- paste("**",df[2,4],"**", sep = "")
-df[2,5] <- paste("**",df[2,5],"**", sep = "")
-df[1,2] <- paste("**",df[1,2],"**", sep = "")
+df[3,3] <- paste("",df[3,3],"*", sep = "")
+df[2,4] <- paste("",df[2,4],"*", sep = "")
+df[2,5] <- paste("",df[2,5],"*", sep = "")
+df[1,2] <- paste("",df[1,2],"*", sep = "")
 
 # helpful info on kable use: https://rpubs.com/yutao/444395
 
@@ -84,7 +79,7 @@ kable(df, format = "latex", booktabs = T, caption = NULL,
   # kable_styling(full_width = NULL) %>%
   # row_spec(3, bold = T, hline_after = T) %>%
   add_header_above(c(" ", "Private" = 2, "Public" = 2)) %>%
-  add_footnote(c("**We only analyzed these reserves to minimize duplication from sources.**"), notation = "symbol") %>%
+  add_footnote(c("We only analyzed these reserves to minimize duplication from sources."), notation = "symbol") %>%
   as_image()
 ```
 
