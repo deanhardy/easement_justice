@@ -106,7 +106,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population Density (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Median Income ($US)')
+COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Median Income ($US)')
 
 # LaTeX Table
 df2 %>%
@@ -144,7 +144,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population Density (per mi²)', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income ($US)')
+COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income ($US)')
 
 # LaTeX Table
 df2 %>%
@@ -185,7 +185,7 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = c('Region', 'Area (mi²)', 'Beneficiary Population', 'Population Density (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
+         col.names = c('Region', 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   pack_rows("Interstate", 1, 3) %>%
