@@ -56,7 +56,7 @@ df <- read.csv(file.path(datadir, 'cl-stats-unfiltered.csv'))[-1] %>%
     GA.PubC = sum(GA.PubC, na.rm=T),
     SC.PubC = sum(SC.PubC, na.rm=T)) %>%
   mutate(GA.Pvt = paste(GA.Pvt, " (", GA.PvtC, ")", sep = ""),
-         SC.Pvt = paste(SC.Pvt, "(", SC.PvtC, ")", sep = ""),
+         SC.Pvt = paste(SC.Pvt, " (", SC.PvtC, ")", sep = ""),
          GA.Pub = paste(GA.Pub, " (", GA.PubC, ")", sep = ""),
          SC.Pub = paste(SC.Pub, " (", SC.PubC, ")", sep = "")) %>%
   select(source:SC.Pub)
@@ -65,16 +65,16 @@ df <- read.csv(file.path(datadir, 'cl-stats-unfiltered.csv'))[-1] %>%
 df[3,2] <- paste("--")
 df[3,4] <- paste("--")
 
-df[3,3] <- paste("",df[3,3],"*", sep = "")
-df[2,4] <- paste("",df[2,4],"*", sep = "")
-df[2,5] <- paste("",df[2,5],"*", sep = "")
-df[1,2] <- paste("",df[1,2],"*", sep = "")
+df[3,3] <- paste("*",df[3,3],"", sep = "")
+df[2,4] <- paste("*",df[2,4],"", sep = "")
+df[2,5] <- paste("*",df[2,5],"", sep = "")
+df[1,2] <- paste("*",df[1,2],"", sep = "")
 
 # helpful info on kable use: https://rpubs.com/yutao/444395
 
 # LaTeX Table
 kable(df, format = "latex", booktabs = T, caption = NULL,
-      align = c("l", "c", "c", "c", "c"),
+      align = "lrrrr",
       col.names = c('Data\nSource', 'Georgia', 'South Carolina', 'Georgia', 'South Carolina')) %>%
   # kable_styling(full_width = NULL) %>%
   # row_spec(3, bold = T, hline_after = T) %>%
@@ -95,31 +95,31 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
          popden = round(popden * 0.386102), 0) %>%
   arrange(id, region, cat) %>%
   filter(region == 'Lowcountry') %>%
-  mutate(area = paste0(area, " (± ", se_area, ")"),
-         tot_pop = paste0(tot_pop, " (± ", se_tot_pop, ")"),
-         popden = paste0(popden, " (± ", se_popden, ")"),
-         pwhite = paste0(pwhite, " (± ", se_pwhite, ")"),
-         pblack = paste0(pblack, " (± ", se_pblack, ")"),
-         pother = paste0(pother, " (± ", se_pother, ")"),
-         platinx = paste0(platinx, " (± ", se_platinx, ")"),
-         propPOC = paste0(propPOC, " (± ", se_propPOC, ")"),
-         medhhinc = paste0(medhhinc, " (± ", se_medhhinc, ")")) %>%
+  mutate(area = paste0(area, " ± ", se_area),
+         tot_pop = paste0(tot_pop, " ± ", se_tot_pop),
+         popden = paste0(popden, " ± ", se_popden),
+         pwhite = paste0(pwhite, " ± ", se_pwhite),
+         pblack = paste0(pblack, " ± ", se_pblack),
+         pother = paste0(pother, " ± ", se_pother),
+         platinx = paste0(platinx, " ± ", se_platinx),
+         propPOC = paste0(propPOC, " ± ", se_propPOC),
+         medhhinc = paste0(medhhinc, " ± ", se_medhhinc)) %>%
   mutate(urban = if_else(is.na(urban), .$urban[2] + .$urban[3], urban)) %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
   select(region, cat, area, tot_pop:pblack, medhhinc)
 
-df2[1,3:9] <- str_remove(df2[1,3:9], " \\(± NA\\)")
+df2[1,3:9] <- str_remove(df2[1,3:9], " ± NA")
 
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Median Income ($US)')
+COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Median Income (US$)')
 
 # LaTeX Table
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-        col.names = COLNAMES, align = "lccccccc") %>%
+        col.names = COLNAMES, align = "lrrrrrrr") %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   # pack_rows("Interstate", 1, 3) %>%
@@ -149,22 +149,22 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
                            ifelse(region == "Lowcountry" & cat == "Private", .$reserves[3]+.$reserves[4],
                                   ifelse(region == "Lowcountry" & cat == "Public", .$reserves[6]+.$reserves[7],
                                          reserves)))) %>%
-    mutate(area = paste0(area, " (± ", se_area, ")"),
-         tot_pop = paste0(tot_pop, " (± ", se_tot_pop, ")"),
-         popden = paste0(popden, " (± ", se_popden, ")"),
-         pwhite = paste0(pwhite, " (± ", se_pwhite, ")"),
-         pblack = paste0(pblack, " (± ", se_pblack, ")"),
-         pother = paste0(pother, " (± ", se_pother, ")"),
-         platinx = paste0(platinx, " (± ", se_platinx, ")"),
-         propPOC = paste0(propPOC, " (± ", se_propPOC, ")"),
-         medhhinc = paste0(medhhinc, " (± ", se_medhhinc, ")")) %>%
+  mutate(area = paste0(area, " ± ", se_area),
+         tot_pop = paste0(tot_pop, " ± ", se_tot_pop),
+         popden = paste0(popden, " ± ", se_popden),
+         pwhite = paste0(pwhite, " ± ", se_pwhite),
+         pblack = paste0(pblack, " ± ", se_pblack),
+         pother = paste0(pother, " ± ", se_pother),
+         platinx = paste0(platinx, " ± ", se_platinx),
+         propPOC = paste0(propPOC, " ± ", se_propPOC),
+         medhhinc = paste0(medhhinc, " ± ", se_medhhinc)) %>%
   select(region, cat, area, tot_pop:pblack, medhhinc)
 
-df2[1,3:9] <- str_remove(df2[1,3:9], " \\(± NA\\)")
+df2[1,3:9] <- str_remove(df2[1,3:9], " ± NA")
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income ($US)')
+COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income (US$)')
 
 # LaTeX Table
 df2 %>%
@@ -198,26 +198,26 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
                         ifelse(region == 'South Carolina' & cat == 'Lowcountry', .$urban[5]+.$urban[6],
                                ifelse(region == 'Georgia' & cat == 'Lowcountry', .$urban[8]+.$urban[9], urban)))) %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
-    mutate(area = paste0(area, " (± ", se_area, ")"),
-         tot_pop = paste0(tot_pop, " (± ", se_tot_pop, ")"),
-         popden = paste0(popden, " (± ", se_popden, ")"),
-         pwhite = paste0(pwhite, " (± ", se_pwhite, ")"),
-         pblack = paste0(pblack, " (± ", se_pblack, ")"),
-         pother = paste0(pother, " (± ", se_pother, ")"),
-         platinx = paste0(platinx, " (± ", se_platinx, ")"),
-         propPOC = paste0(propPOC, " (± ", se_propPOC, ")"),
-         medhhinc = paste0(medhhinc, " (± ", se_medhhinc, ")")) %>%
+  mutate(area = paste0(area, " ± ", se_area),
+         tot_pop = paste0(tot_pop, " ± ", se_tot_pop),
+         popden = paste0(popden, " ± ", se_popden),
+         pwhite = paste0(pwhite, " ± ", se_pwhite),
+         pblack = paste0(pblack, " ± ", se_pblack),
+         pother = paste0(pother, " ± ", se_pother),
+         platinx = paste0(platinx, " ± ", se_platinx),
+         propPOC = paste0(propPOC, " ± ", se_propPOC),
+         medhhinc = paste0(medhhinc, " ± ", se_medhhinc)) %>%
   select(region, cat, area, tot_pop:medhhinc)
 
-df2[1,3:12] <- str_remove(df2[1,3:12], " \\(± NA\\)")
-df2[4,3:12] <- str_remove(df2[4,3:12], " \\(± NA\\)")
-df2[7,3:12] <- str_remove(df2[7,3:12], " \\(± NA\\)")
+df2[1,3:12] <- str_remove(df2[1,3:12], " ± NA")
+df2[4,3:12] <- str_remove(df2[4,3:12], " ± NA")
+df2[7,3:12] <- str_remove(df2[7,3:12], " ± NA")
 
 # LaTeX Table
 df2 %>%
   select(-region) %>%
-  kable(format = "latex", booktabs = T, caption = NULL,
-         col.names = c('Region', 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income ($US)')) %>%
+  kable(format = "latex", booktabs = T, caption = NULL, align = "lrrrrrrrrrr",
+         col.names = c('Region', 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income (US$)')) %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   pack_rows("Interstate", 1, 3) %>%
