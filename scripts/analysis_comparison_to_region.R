@@ -33,8 +33,15 @@ cl_demg <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
          statefp = as.character(statefp)) %>%
   select(cat, statefp, sqkm_bz, tot_pop, popden, urban, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat, statefp) %>%
-  summarise(sd_sqkm = sd(sqkm_bz), sd_tot_pop = sd(tot_pop), sd_popden = sd(popden), sd_pwhite = sd(pwhite), sd_pblack = sd(pblack), 
-            sd_pother = sd(pother), sd_platinx = sd(platinx), sd_propPOC = sd(propPOC), sd_medhhinc = sd(medhhinc),
+  summarise(se_sqkm = sd(sqkm_bz, na.rm = T)/sqrt(length(sqkm_bz[!is.na(sqkm_bz)])),
+            se_tot_pop = sd(tot_pop, na.rm = T)/sqrt(length(tot_pop[!is.na(tot_pop)])),
+            se_popden = sd(popden, na.rm = T)/sqrt(length(popden[!is.na(popden)])),
+            se_pwhite = sd(pwhite, na.rm = T)/sqrt(length(pwhite[!is.na(pwhite)])),
+            se_pblack = sd(pblack, na.rm = T)/sqrt(length(pblack[!is.na(pblack)])),
+            se_pother = sd(pother, na.rm = T)/sqrt(length(pother[!is.na(pother)])),
+            se_platinx = sd(platinx, na.rm = T)/sqrt(length(platinx[!is.na(platinx)])),
+            se_propPOC = sd(propPOC, na.rm = T)/sqrt(length(propPOC[!is.na(propPOC)])),
+            se_medhhinc = sd(medhhinc, na.rm = T)/sqrt(length(medhhinc[!is.na(medhhinc)])),
             sqkm = mean(sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), 
             pother = mean(pother), platinx = mean(platinx), propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   # summarise(sqkm = mean (sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
@@ -48,8 +55,15 @@ cl_demg_urb <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
   mutate(statefp = if_else(urban == 'yes', 'Urban', 'Rural'), urban = if_else(urban == 'yes', 1, 0)) %>%
   select(cat, statefp, sqkm_bz, tot_pop, popden, urban, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat, statefp) %>%
-  summarise(sd_sqkm = sd(sqkm_bz), sd_tot_pop = sd(tot_pop), sd_popden = sd(popden), sd_pwhite = sd(pwhite), sd_pblack = sd(pblack), 
-            sd_pother = sd(pother), sd_platinx = sd(platinx), sd_propPOC = sd(propPOC), sd_medhhinc = sd(medhhinc),
+  summarise(se_sqkm = sd(sqkm_bz, na.rm = T)/sqrt(length(sqkm_bz[!is.na(sqkm_bz)])),
+            se_tot_pop = sd(tot_pop, na.rm = T)/sqrt(length(tot_pop[!is.na(tot_pop)])),
+            se_popden = sd(popden, na.rm = T)/sqrt(length(popden[!is.na(popden)])),
+            se_pwhite = sd(pwhite, na.rm = T)/sqrt(length(pwhite[!is.na(pwhite)])),
+            se_pblack = sd(pblack, na.rm = T)/sqrt(length(pblack[!is.na(pblack)])),
+            se_pother = sd(pother, na.rm = T)/sqrt(length(pother[!is.na(pother)])),
+            se_platinx = sd(platinx, na.rm = T)/sqrt(length(platinx[!is.na(platinx)])),
+            se_propPOC = sd(propPOC, na.rm = T)/sqrt(length(propPOC[!is.na(propPOC)])),
+            se_medhhinc = sd(medhhinc, na.rm = T)/sqrt(length(medhhinc[!is.na(medhhinc)])),
             sqkm = mean(sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), 
             pother = mean(pother), platinx = mean(platinx), propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   # summarise(sqkm = mean (sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), pother = mean(pother), platinx = mean(platinx), 
@@ -63,8 +77,16 @@ cl_demg_entire <- read.csv(file.path(datadir, 'cl_buf_demg_data.csv')) %>%
   mutate(urban = if_else(urban == 'yes', 1, 0)) %>%
   select(cat, statefp, sqkm_bz, tot_pop, popden, urban, pwhite, pblack, pother, platinx, propPOC, medhhinc) %>%
   group_by(cat) %>%
-  summarise(statefp = 'Lowcountry', sd_sqkm = sd(sqkm_bz), sd_tot_pop = sd(tot_pop), sd_popden = sd(popden), sd_pwhite = sd(pwhite), sd_pblack = sd(pblack), 
-            sd_pother = sd(pother), sd_platinx = sd(platinx), sd_propPOC = sd(propPOC), sd_medhhinc = sd(medhhinc),
+  summarise(statefp = 'Lowcountry',
+    se_sqkm = sd(sqkm_bz, na.rm = T)/sqrt(length(sqkm_bz[!is.na(sqkm_bz)])),
+            se_tot_pop = sd(tot_pop, na.rm = T)/sqrt(length(tot_pop[!is.na(tot_pop)])),
+            se_popden = sd(popden, na.rm = T)/sqrt(length(popden[!is.na(popden)])),
+            se_pwhite = sd(pwhite, na.rm = T)/sqrt(length(pwhite[!is.na(pwhite)])),
+            se_pblack = sd(pblack, na.rm = T)/sqrt(length(pblack[!is.na(pblack)])),
+            se_pother = sd(pother, na.rm = T)/sqrt(length(pother[!is.na(pother)])),
+            se_platinx = sd(platinx, na.rm = T)/sqrt(length(platinx[!is.na(platinx)])),
+            se_propPOC = sd(propPOC, na.rm = T)/sqrt(length(propPOC[!is.na(propPOC)])),
+            se_medhhinc = sd(medhhinc, na.rm = T)/sqrt(length(medhhinc[!is.na(medhhinc)])),
             sqkm = mean(sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = n(), pwhite = mean(pwhite), pblack = mean(pblack), 
             pother = mean(pother), platinx = mean(platinx), propPOC = mean(propPOC), medhhinc = mean(medhhinc)) %>%
   # summarise(statefp = 'Lowcountry', sqkm = mean(sqkm_bz), tot_pop = mean(tot_pop), popden = mean(popden), urban = sum(urban), pwhite = mean(pwhite), 
@@ -96,11 +118,14 @@ df3 <- df2 %>%
          tot_pop = round(tot_pop, 0),
          popden = round(popden, 0),
          medhhinc = round(medhhinc, 0),
-         sd_sqkm = round(sd_sqkm, 0),
-         sd_tot_pop = round(sd_tot_pop, 0),
-         sd_popden = round(sd_popden, 0),
-         sd_medhhinc = round(sd_medhhinc, 0)) %>%
+         se_sqkm = round(se_sqkm, 0),
+         se_tot_pop = round(se_tot_pop, 0),
+         se_popden = round(se_popden, 0),
+         se_medhhinc = round(se_medhhinc, 0)) %>%
   select(-statefp)
+
+df3[5:9] <- df3[5:9] * 100
+df3[15:19] <- df3[15:19] * 100
 
 write.csv(df3, file.path(datadir, 'regional-comparison.csv'))
 

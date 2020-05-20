@@ -1,10 +1,10 @@
 ---
 title: ''
 output:
-  word_document: default
   pdf_document:
     fig_caption: no
     keep_tex: yes
+  word_document: default
 classoption: landscape
 ---
 
@@ -84,29 +84,31 @@ kable(df, format = "latex", booktabs = T, caption = NULL,
 ```
 
 ### Table 2. Demographic Comparison by Region. 
-Area and Beneficiary Population is total for Lowcountry region, but mean for private and public beneficiary zones. Results are for the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing. One standard deviation is shown for means.
+Results are from the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing. Standard error is shown for means of private and public beneficiary zones.
 ```{r include=TRUE, echo=FALSE}
 
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
   mutate(id = if_else(region == "Lowcountry", 1, 
                       if_else(region == "South Carolina", 2, 3)),
          area = round(sqkm * 0.386102,0),
-         sd_area = round(sd_sqkm * 0.386102,0),
+         se_area = round(se_sqkm * 0.386102,0),
          popden = round(popden * 0.386102), 0) %>%
   arrange(id, region, cat) %>%
   filter(region == 'Lowcountry') %>%
-  mutate(area = paste0(area, " ± ", sd_area),
-         tot_pop = paste0(tot_pop, " ± ", sd_tot_pop),
-         popden = paste0(popden, " ± ", sd_popden),
-         pwhite = paste0(pwhite, " ± ", sd_pwhite),
-         pblack = paste0(pblack, " ± ", sd_pblack),
-         pother = paste0(pother, " ± ", sd_pother),
-         platinx = paste0(platinx, " ± ", sd_platinx),
-         propPOC = paste0(propPOC, " ± ", sd_propPOC),
-         medhhinc = paste0(medhhinc, " ± ", sd_medhhinc)) %>%
+  mutate(area = paste0(area, " (± ", se_area, ")"),
+         tot_pop = paste0(tot_pop, " (± ", se_tot_pop, ")"),
+         popden = paste0(popden, " (± ", se_popden, ")"),
+         pwhite = paste0(pwhite, " (± ", se_pwhite, ")"),
+         pblack = paste0(pblack, " (± ", se_pblack, ")"),
+         pother = paste0(pother, " (± ", se_pother, ")"),
+         platinx = paste0(platinx, " (± ", se_platinx, ")"),
+         propPOC = paste0(propPOC, " (± ", se_propPOC, ")"),
+         medhhinc = paste0(medhhinc, " (± ", se_medhhinc, ")")) %>%
   mutate(urban = if_else(is.na(urban), .$urban[2] + .$urban[3], urban)) %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
   select(region, cat, area, tot_pop:pblack, medhhinc)
+
+df2[1,3:9] <- str_remove(df2[1,3:9], " \\(± NA\\)")
 
 
 # Other.exp <- expression(paste("Other (%)", a^2))
@@ -117,7 +119,7 @@ COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL,
-        col.names = COLNAMES) %>%
+        col.names = COLNAMES, align = "lccccccc") %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   # pack_rows("Interstate", 1, 3) %>%
@@ -130,7 +132,7 @@ df2 %>%
 \pagebreak
 
 ### Table 2.1 (URBAN v. RURAL). Demographic Comparison by Region. 
-Area and Beneficiary Population is total for Lowcountry region, but mean for private and public beneficiary zones. Results are for the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing. One standard deviation is shown for means.
+Results are from the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing. Standard error is shown for means of private and public beneficiary zones.
 ```{r include=TRUE, echo=FALSE}
 
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
@@ -140,23 +142,25 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
   mutate(id = if_else(cat == "Lowcountry", 1, 
                       if_else(region == "Private", 2, 3)),
          area = round(sqkm * 0.386102,0),
-         sd_area = round(sd_sqkm * 0.386102,0),
+         se_area = round(se_sqkm * 0.386102,0),
          popden = round(popden * 0.386102, 0)) %>%
   arrange(id, cat, region) %>%
   mutate(reserves = ifelse(is.na(reserves), '1053', 
                            ifelse(region == "Lowcountry" & cat == "Private", .$reserves[3]+.$reserves[4],
                                   ifelse(region == "Lowcountry" & cat == "Public", .$reserves[6]+.$reserves[7],
                                          reserves)))) %>%
-  mutate(area = paste0(area, " ± ", sd_area),
-         tot_pop = paste0(tot_pop, " ± ", sd_tot_pop),
-         popden = paste0(popden, " ± ", sd_popden),
-         pwhite = paste0(pwhite, " ± ", sd_pwhite),
-         pblack = paste0(pblack, " ± ", sd_pblack),
-         pother = paste0(pother, " ± ", sd_pother),
-         platinx = paste0(platinx, " ± ", sd_platinx),
-         propPOC = paste0(propPOC, " ± ", sd_propPOC),
-         medhhinc = paste0(medhhinc, " ± ", sd_medhhinc)) %>%
+    mutate(area = paste0(area, " (± ", se_area, ")"),
+         tot_pop = paste0(tot_pop, " (± ", se_tot_pop, ")"),
+         popden = paste0(popden, " (± ", se_popden, ")"),
+         pwhite = paste0(pwhite, " (± ", se_pwhite, ")"),
+         pblack = paste0(pblack, " (± ", se_pblack, ")"),
+         pother = paste0(pother, " (± ", se_pother, ")"),
+         platinx = paste0(platinx, " (± ", se_platinx, ")"),
+         propPOC = paste0(propPOC, " (± ", se_propPOC, ")"),
+         medhhinc = paste0(medhhinc, " (± ", se_medhhinc, ")")) %>%
   select(region, cat, area, tot_pop:pblack, medhhinc)
+
+df2[1,3:9] <- str_remove(df2[1,3:9], " \\(± NA\\)")
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
@@ -179,7 +183,7 @@ df2 %>%
 \pagebreak
 
 ### Table 2.2 (EXPANDED). Demographic Comparison by Region. 
-Area and Beneficiary Population is total for Lowcountry region, but mean for private and public beneficiary zones. Numbers shown are for the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing. One standard deviation is shown for means.
+Results are from the 10 mile beneficiary zone and 0.2 mile conservation reserve buffer zone pairing. Standard error is shown for means of private and public beneficiary zones.
 ```{r include=TRUE, echo=FALSE}
 
 df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
@@ -187,25 +191,27 @@ df2 <- read.csv(file.path(datadir, 'regional-comparison.csv'))[-1] %>%
   mutate(id = if_else(region == "Lowcountry", 1, 
                       if_else(region == "South Carolina", 2, 3)),
          area = round(sqkm * 0.386102,0),
-         sd_area = round(sd_sqkm * 0.386102,0),
+         se_area = round(se_sqkm * 0.386102,0),
          popden = round(popden * 0.386102), 0) %>%
   arrange(id, region, cat) %>%
   mutate(urban = ifelse(region == 'Lowcountry' & cat == 'Lowcountry', .$urban[2]+.$urban[3],
                         ifelse(region == 'South Carolina' & cat == 'Lowcountry', .$urban[5]+.$urban[6],
                                ifelse(region == 'Georgia' & cat == 'Lowcountry', .$urban[8]+.$urban[9], urban)))) %>%
   # mutate(medhhinc = paste("$", medhhinc, sep = '')) %>%
-  mutate(area = paste0(area, " ± ", sd_area),
-         tot_pop = paste0(tot_pop, " ± ", sd_tot_pop),
-         popden = paste0(popden, " ± ", sd_popden),
-         pwhite = paste0(pwhite, " ± ", sd_pwhite),
-         pblack = paste0(pblack, " ± ", sd_pblack),
-         pother = paste0(pother, " ± ", sd_pother),
-         platinx = paste0(platinx, " ± ", sd_platinx),
-         propPOC = paste0(propPOC, " ± ", sd_propPOC),
-         medhhinc = paste0(medhhinc, " ± ", sd_medhhinc)) %>%
+    mutate(area = paste0(area, " (± ", se_area, ")"),
+         tot_pop = paste0(tot_pop, " (± ", se_tot_pop, ")"),
+         popden = paste0(popden, " (± ", se_popden, ")"),
+         pwhite = paste0(pwhite, " (± ", se_pwhite, ")"),
+         pblack = paste0(pblack, " (± ", se_pblack, ")"),
+         pother = paste0(pother, " (± ", se_pother, ")"),
+         platinx = paste0(platinx, " (± ", se_platinx, ")"),
+         propPOC = paste0(propPOC, " (± ", se_propPOC, ")"),
+         medhhinc = paste0(medhhinc, " (± ", se_medhhinc, ")")) %>%
   select(region, cat, area, tot_pop:medhhinc)
 
-# Other.exp <- expression(paste("Other (%)", a^2))
+df2[1,3:12] <- str_remove(df2[1,3:12], " \\(± NA\\)")
+df2[4,3:12] <- str_remove(df2[4,3:12], " \\(± NA\\)")
+df2[7,3:12] <- str_remove(df2[7,3:12], " \\(± NA\\)")
 
 # LaTeX Table
 df2 %>%
