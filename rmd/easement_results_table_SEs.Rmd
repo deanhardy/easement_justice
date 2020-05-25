@@ -1,10 +1,10 @@
 ---
 title: ''
 output:
+  word_document: default
   pdf_document:
     fig_caption: no
     keep_tex: yes
-  word_document: default
 classoption: landscape
 ---
 

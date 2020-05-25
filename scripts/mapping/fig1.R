@@ -107,8 +107,8 @@ bgc <- bg %>%
 fig2 <- 
   tm_shape(t1) + tm_borders(col = 'black', lwd = 2) +
   tm_shape(st) + tm_fill(col = 'white') +
-  tm_shape(bgc) +
-  tm_polygons(col = 'percPOC', palette = mycols, style = 'fisher', lwd = 0.2, title = 'People of Color (%)') +
+  # tm_shape(bgc) +
+  # tm_polygons(col = 'percPOC', palette = mycols, style = 'fisher', lwd = 0.2, title = 'People of Color (%)') +
   tm_shape(buf) +
   tm_fill(col = 'conscat', alpha = 1, palette = clr2,
           legend.show = FALSE) +
@@ -123,10 +123,10 @@ fig2 <-
   tm_scale_bar(breaks = c(0,50,100), text.size = 0.8, position= c(0.72, 0.26)) +
   tm_add_legend(type = c('fill'), 
                 border.col = 'black',
-                labels = c('Private Easement', 'Public Reserve', 'Lowcountry'), 
+                labels = c('Private Easement Zone', 'Public Reserve Zone', 'Lowcountry'), 
                 col = clr2, 
                 title = "MAP KEY") +
-  tm_legend(position = c(0.68, 0.04),
+  tm_legend(position = c(0.63, 0.04),
             bg.color = 'white',
             frame = TRUE,
             legend.text.size = 1,
@@ -139,9 +139,12 @@ fig2 <-
             asp=3/2)
 #fig2
 
-tiff(file.path(datadir, 'figures/fig1.tiff'), units = 'in',
-     height = 4, width = 6, res = 150, compression = 'lzw')
+# tiff(file.path(datadir, 'figures/fig1.tiff'), units = 'in',
+#      height = 4, width = 6, res = 150, compression = 'lzw')
+# fig2
+# dev.off()
+
+png(file.path(datadir, 'figures/fig1.png'), units = 'in',
+    height = 4, width = 6, res = 150)
 fig2
 dev.off()
-
-
