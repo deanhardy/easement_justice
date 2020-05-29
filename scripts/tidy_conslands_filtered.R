@@ -74,6 +74,12 @@ tnc <- tnc %>%
                           ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA))) %>%
   filter(conscat == 'Private')
 
+tnc_access <- tnc %>% 
+  st_set_geometry(NULL) %>%
+  dplyr::select(access) %>% 
+  group_by(access) %>% 
+  summarise(count = n())
+
 ## convert to raster then back to polygon
 # r <- raster(tnc, res = 10)
 # tnc_r <- fasterize(tnc, r, field = 'id')
