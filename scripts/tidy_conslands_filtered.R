@@ -73,6 +73,7 @@ tnc <- st_read(file.path(datadir, "tnc/tnc.shp"), stringsAsFactors = F) %>%
                           ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA))) %>%
   filter(conscat == 'Private')
 
+<<<<<<< HEAD
 tnc_lc <- tnc %>%
   st_make_valid() %>%
   filter(ecorg_tier == 1 & state %in% c('GA', 'SC') & !is.na(owntype))
@@ -91,6 +92,14 @@ tnc_x_nced <- tnc_lc %>%
 #   group_by(PubAccess) %>% 
 #   summarise(count = n())
 
+=======
+tnc_access <- tnc %>% 
+  st_set_geometry(NULL) %>%
+  dplyr::select(access) %>% 
+  group_by(access) %>% 
+  summarise(count = n())
+
+>>>>>>> f007b9383f45b7b25abe12dfe5243b85d3027408
 ## convert to raster then back to polygon
 # r <- raster(tnc, res = 10)
 # tnc_r <- fasterize(tnc, r, field = 'id')
