@@ -86,19 +86,22 @@ AOI_geog <- percBGinAOI %>%
          other = (native_american+asian+hawaiian+other+multiracial) * perc_bginAOI,
          latinx = latinx * perc_bginAOI,
          hu = hu * perc_bginAOI,
+         tenure_b = tenure_b * perc_bginAOI,
+         tenure_tot = tenure_tot * perc_bginAOI,
          sqkm_land = sqkm_land * perc_bginAOI) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
   group_by(statefp) %>% ## regroups to cons areas after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
+            tenure_b = sum(tenure_b), tenure_tot = sum(tenure_tot),
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
             sqkm_land = sum(sqkm_land)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0)) %>%
+         ptenure_b = round(tenure_b/tenure_tot, 2), mnhhinc = round(agghhinc/hu, 0)) %>%
   merge(AOI) %>%
   dplyr::select(statefp, sqkm_land, tot_pop, popden, pwhite, white, pblack, black, pother, other, 
-                platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
+                platinx, latinx, propPOC, ptenure_b, tenure_b, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
 
@@ -187,19 +190,22 @@ AOI_geog <- percBGinAOI %>%
          other = (native_american+asian+hawaiian+other+multiracial) * perc_bginAOI,
          latinx = latinx * perc_bginAOI,
          hu = hu * perc_bginAOI,
+         tenure_b = tenure_b * perc_bginAOI,
+         tenure_tot = tenure_tot * perc_bginAOI,
          sqkm_land = sqkm_land * perc_bginAOI) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
   # group_by(statefp) %>% ## regroups to cons areas after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
             other = sum(other), latinx = sum(latinx), 
+            tenure_b = sum(tenure_b), tenure_tot = sum(tenure_tot),
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
             sqkm_land = sum(sqkm_land)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0)) %>%
+         ptenure_b = round(tenure_b/tenure_tot, 2), mnhhinc = round(agghhinc/hu, 0)) %>%
   merge(AOI) %>%
   dplyr::select(tot_pop, sqkm_land, popden, pwhite, white, pblack, black, pother, other, 
-                platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
+                platinx, latinx, propPOC, ptenure_b, tenure_b, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
 

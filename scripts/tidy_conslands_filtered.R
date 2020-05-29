@@ -22,33 +22,32 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
-lc_tier1 <- st_read(file.path(datadir, "lc/lc_tier1.shp")) %>%
+lc_tier1 <- st_read(file.path(datadir, "lc_tier1/lc_tier1.shp")) %>%
   st_transform(crs = alb) %>%
-  mutate(area = st_area(geometry)*3.86102e-7)
+  mutate(area = st_area(geometry)*3.86102e-7) %>%
+  st_transform(4326)
 
 ## import protected SC-TNC for SC coastal plain region (tier 3)
 ## assuming NAs and unknowns are PRIVATE (need to revise later)
 ## DO NOT SHARE DATA
-tnc <- st_read(file.path(datadir, "tnc/tnc.shp"))
-  
-tnc_x_nced <- tnc %>% 
-  st_set_geometry(NULL) %>%
-  dplyr::select(NCED) %>% 
-  group_by(NCED) %>% 
-  summarise(count = n())
 
-tnc_access <- tnc %>% 
-  st_set_geometry(NULL) %>%
-  dplyr::select(PubAccess) %>% 
-  group_by(PubAccess) %>% 
-  summarise(count = n())
+## clip tnc to lowcountry and then access NCED data restrictions
+# tnc_lc <- st_read(file.path(datadir, "tnc/tnc.shp"), stringsAsFactors = F) %>%
+#   st_transform(4326) %>%
+#   filter(ecorg_tier == 1 & state %in% c('GA', 'SC') & !is.na(OwnType))
+# 
+#   filter(st_contains_properly(lc_tier1, ., sparse = F)) %>%
+#   group_by(ORIG_FID, NCED) %>%
+#   st_set_geometry(NULL) %>%
+#   dplyr::select(NCED) %>% 
+#   summarise(count = n())
 
-tnc <- tnc %>%
+tnc <- st_read(file.path(datadir, "tnc/tnc.shp"), stringsAsFactors = F) %>%
   st_transform(crs = utm) %>%
   mutate(id = 1:nrow(.), source = 'tnc', acres = as.numeric(st_area(geometry) * 0.00024710538), 
          purpose = 'NA', state = 'SC', gap = PurposeCde) %>%
   dplyr::select(id, OwnType, HoldType, EsmtHldr, SiteName, PubAccess, state,
-                acres, gap, purpose, ORIG_FID, ecorg_tier, source, geometry) %>%
+                acres, gap, purpose, ORIG_FID, ecorg_tier, source, NCED, geometry) %>%
   rename(owntype = OwnType,
          mgmttype = HoldType,
          management = EsmtHldr,
@@ -73,6 +72,24 @@ tnc <- tnc %>%
   mutate(conscat = ifelse(owntype %in% c('DESG', 'DIST', 'FED', 'LOC', 'STAT', 'JNT'), 'Public',
                           ifelse(owntype %in% c(NA, 'NGO', 'PVT', 'UNK'), 'Private', NA))) %>%
   filter(conscat == 'Private')
+
+tnc_lc <- tnc %>%
+  st_make_valid() %>%
+  filter(ecorg_tier == 1 & state %in% c('GA', 'SC') & !is.na(owntype))
+
+tnc_x_nced <- tnc_lc %>% 
+  st_set_geometry(NULL) %>%
+  group_by(orig_id) %>% 
+  dplyr::select(NCED) %>% 
+  summarise(nced = first(NCED)) %>%
+  group_by(nced) %>%
+  summarise(count = n())
+
+# tnc_access <- tnc %>% 
+#   st_set_geometry(NULL) %>%
+#   dplyr::select(PubAccess) %>% 
+#   group_by(PubAccess) %>% 
+#   summarise(count = n())
 
 ## convert to raster then back to polygon
 # r <- raster(tnc, res = 10)

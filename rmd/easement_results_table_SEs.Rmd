@@ -1,10 +1,10 @@
 ---
 title: ''
 output:
-  word_document: default
   pdf_document:
     fig_caption: no
     keep_tex: yes
+  word_document: default
 classoption: landscape
 ---
 
@@ -164,7 +164,7 @@ df2[1,3:9] <- str_remove(df2[1,3:9], " ± NA")
 
 # Other.exp <- expression(paste("Other (%)", a^2))
 
-COLNAMES = c("Region", 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income (US$)')
+COLNAMES = linebreak(c("Region", 'Area (mi²)', 'Beneficiary\nPopulation', 'Population (per mi²)', 'Reserve Zones (#)', 'White (%)', 'Black (%)', 'Median Income (US$)'))
 
 # LaTeX Table
 df2 %>%
@@ -217,7 +217,7 @@ df2[7,3:12] <- str_remove(df2[7,3:12], " ± NA")
 df2 %>%
   select(-region) %>%
   kable(format = "latex", booktabs = T, caption = NULL, align = "lrrrrrrrrrr",
-         col.names = c('Region', 'Area (mi²)', 'Beneficiary Population', 'Population (per mi²)', 'Urban Reserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income (US$)')) %>%
+         col.names = linebreak(c('Region', 'Area (mi²)', 'Beneficiary\nPopulation', 'Population (per mi²)', 'Urban\nReserve Zones', 'White (%)', 'Black (%)', 'Latinx (%)', 'Other (%)^a', 'People of Color (%)^b', 'Median Income (US$)'))) %>%
   # kable_styling(latex_options = "scale_down", "striped",
   #               full_width = NULL) %>%
   pack_rows("Interstate", 1, 3) %>%

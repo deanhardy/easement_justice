@@ -101,19 +101,22 @@ cabz_demo <- percBGinBZ %>%
          #other = multiracial * perc_bginbz,
          latinx = latinx * perc_bginbz,
          hu = hu * perc_bginbz,
+         tenure_b = tenure_b * perc_bginbz,
+         tenure_tot = tenure_tot * perc_bginbz,
          sqkm_land = sqkm_land * perc_bginbz) %>%
   mutate(agghhinc = hu * mnhhinc) %>%
   group_by(rowid) %>% ## regroups to cons buffer (or beneficiary?) zones after demo analysis on intersections
   summarise(tot_pop = sum(tot_pop), white = sum(white), black = sum(black), 
-            other = sum(other), latinx = sum(latinx), 
+            other = sum(other), latinx = sum(latinx),
+            tenure_b = sum(tenure_b), tenure_tot = sum(tenure_tot),
             hu = round(sum(hu, na.rm = TRUE), 0), agghhinc = sum(agghhinc, na.rm = TRUE),
             sqkm_bz = mean(sqkm_bz), sqkm_land = sum(sqkm_land), bzone_m = mean(bzone_m)) %>%
   mutate(pwhite = round(white/tot_pop, 2), pblack = round(black/tot_pop, 2), pother = round(other/tot_pop, 2), 
          platinx = round(latinx/tot_pop, 2), popden = round(tot_pop/sqkm_land, 2), propPOC = round(1 - pwhite, 2),
-         mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
+         ptenure_b = round(tenure_b/tenure_tot, 2), mnhhinc = round(agghhinc/hu, 0), pland = round((sqkm_land)/sqkm_bz, 2)) %>%
   merge(cons, by = 'rowid') %>%
   dplyr::select(rowid, conscat, bzone_m, buf_m, tot_pop, popden, sqkm_bz, pland, pwhite, white, pblack, black, pother, other, 
-                platinx, latinx, propPOC, hu, mnhhinc, geometry) %>%
+                platinx, latinx, propPOC, ptenure_b, tenure_b, hu, mnhhinc, geometry) %>%
   st_as_sf()
 
 cabz2 <- cabz %>% select(rowid, statefp) 
