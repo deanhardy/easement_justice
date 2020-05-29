@@ -148,6 +148,12 @@ dat2_gap <- dat2 %>%
   group_by(source, gap) %>% 
   summarise(count = n())
 
+ggplot(filter(dat2, conscat=='Private')) + 
+  geom_boxplot(aes(conscat, acres))
+
+dat2 %>% ungroup() %>%filter(conscat == 'Public') %>%
+  summarise(n())
+
 ## summary descriptive stats
 df_sum <- dat2 %>%
   st_drop_geometry() %>%
