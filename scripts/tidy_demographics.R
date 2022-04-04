@@ -21,7 +21,7 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 st <- NULL # used in loop for state data download
 bg <- NULL # used in for loop for block group data download
 gm <- NULL # used in for loop for calculating gmedian
-YR <- 2018
+YR <- 2020
 ST <- c('GA', 'FL', 'SC', 'NC')
 var = c(white = "B03002_003E", black = "B03002_004E",
         native_american = "B03002_005E", asian = "B03002_006E",
@@ -30,7 +30,7 @@ var = c(white = "B03002_003E", black = "B03002_004E",
         medhhinc = "B19049_001E", agghhinc = "B19025_001E", hu = "B25001_001E", mhv = "B25077_001E", 
         tenure_w = "B25003H_002E", tenure_b = "B25003B_002E", tenure_tot = "B25003_002E")
  
-# all_vars <- load_variables(2018, 'acs5', cache = TRUE)
+all_vars <- load_variables(2020, 'pl', cache = TRUE)
 # ## define decennial variables of interest
 # dec_vars <- c(white = "P0050003", black = "P0050004",
 #               native_american = "P0050005", asian = "P0050006",
@@ -112,7 +112,8 @@ for(i in 1:length(ST)) {
   OUT <- get_acs(geography = "block group",
                  table = 'B19001',
                  state = ST[[i]],
-                 year = YR) %>%
+                 year = YR,
+                 cache_table = TRUE) %>%
     select(-NAME, -moe) %>%
     rename(households = estimate) %>%
     filter(variable != 'B19001_001') %>%
