@@ -20,6 +20,7 @@ alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +el
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
 
+## import lowcountry boundary file
 lc_tier1 <- st_read(file.path(datadir, "lc_tier1/lc_tier1.shp")) %>%
   st_transform(crs = alb) %>%
   mutate(area = st_area(geometry)*3.86102e-7)
@@ -102,8 +103,8 @@ dat <- rbind(nced, padus, tnc) %>%
   filter(ecorg_tier == 1 & state %in% c('GA', 'SC') & !is.na(owntype))
 
 ## explore data by mgmt and ownership
-# table(dat$source, dat$conscat)
-# table(dat$source, dat$owntype)
+table(dat$source, dat$conscat)
+table(dat$source, dat$owntype)
 
 ## reassembles single-part reserves in multi-part units (not spatially, but for descriptive stats)
 dat2 <- dat %>%

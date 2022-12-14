@@ -1,3 +1,7 @@
+#######################################
+## Conservation Area BUFFER ANALYSIS
+#######################################
+
 Order in which to run scripts for re-analysis from scratch
 
 Demographics data prep
@@ -14,3 +18,18 @@ Demographic analyses of CABZ and Lowcountry areas
 Comparison of regions (state, lowcountry, CABZ)
 5. analysis_comparison_to_region.R # dependent on outputs from analysis_demographic_cabz.R AND analysis_demographic_lowcountry.R & tidy_demographics.R
 6. then run RMD in r_projects folder if desired
+
+
+##########################################
+## DISTANCE-TO-CONSERVATION-AREA ANALYSIS
+##########################################
+
+Demographics data prep
+0.1. tidy_demographics.R # only if you want to update census data
+
+Conservation reserves data prep
+1. tidy_conslands.R OR tidy_conslands_filtered.R # depending on preference
+
+Distance to reserve analyses 
+1. analysis_bg-distance-to-conslands.R
+2. 
