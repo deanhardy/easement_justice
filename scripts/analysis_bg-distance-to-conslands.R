@@ -1,7 +1,7 @@
 ################################################################################################
 ## PURPOSE: This script analyzes block group distance to conservation lands
-## GOAL: If you're a resident living in a particular analysis unit (BG in this case), 
-## what's your access to conservation reserves
+## GOAL: To determine if you're a resident living in a particular area (BG in this case), 
+## what's your access to conservation reserves?
 ## 
 ## BY: Dean Hardy
 ################################################################################################
@@ -12,12 +12,10 @@ library(tidyverse)
 library(sf)
 library(tigris)
 library(tmap)
+library(units)
 
 ## define variables
 alb <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-84 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" ## http://spatialreference.org/ref/sr-org/albers-conic-equal-area-for-florida-and-georgia/
-
-pub_buf <- NULL
-pvt_buf <- NULL
 
 #define data directory
 datadir <- file.path('/Users/dhardy/Dropbox/r_data/easement-justice')
@@ -79,8 +77,8 @@ bg2$distance <- poly_dist
 
 ## example illustration of selecting all reserves within specified distance of block group
 ## this is what I want! but with distances calculated to each selected reserve as well
-i = 506
-d = 1000
+i = 1579
+d = 5000
 ggplot() +
   geom_sf(data = st_buffer(bg2[i,], d)) + 
   geom_sf(data = bg2[i,], fill = 'blue') +
@@ -97,21 +95,21 @@ cli <- st_intersection(cl, st_buffer(bg2[i,], d)) %>%
   drop_units() %>%
   as.data.frame() %>%
   summarise(n = ncol(.), mean = sum(.)/ncol(.), max = max(.), min = min(.)) %>%
-  mutate(geoid = bg2[i,]$GEOID, dist = d) %>%
-  select(geoid, dist, n, mean, max, min)
+  mutate(geoid = bg2[i,]$GEOID, bgkm2 = bg2[i,]$sqkm_bg, dist = d) %>%
+  select(geoid, bgkm2, dist, n, mean, max, min)
 
 ## for loop to run through all BGs and generate descriptive stats
 cl.dist <- NULL
 i = NULL
-d = 1000
+d = 5000
 for (i in 1:nrow(bg2)) {
 cli <- st_intersection(cl, st_buffer(bg2[i,], d)) %>%
   st_distance(bg2[i,], ., by_element = FALSE) %>%
   drop_units() %>%
   as.data.frame() %>%
   summarise(n = ncol(.), mean = sum(.)/ncol(.), max = max(.), min = min(.)) %>%
-  mutate(geoid = bg2[i,]$GEOID, dist = d) %>%
-  select(geoid, dist, n, mean, max, min)
+  mutate(geoid = bg2[i,]$GEOID, bgkm2 = bg2[i,]$sqkm_bg, dist = d) %>%
+  select(geoid, bgkm2, dist, n, mean, max, min)
 
 cl.dist = rbind(cl.dist, cli)
 }
