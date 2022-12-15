@@ -79,8 +79,8 @@ bg2$distance <- poly_dist
 
 ## example illustration of selecting all reserves within specified distance of block group
 ## this is what I want! but with distances calculated to each selected reserve as well
-i = 1500
-d = 5000
+i = 506
+d = 1000
 ggplot() +
   geom_sf(data = st_buffer(bg2[i,], d)) + 
   geom_sf(data = bg2[i,], fill = 'blue') +
