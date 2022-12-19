@@ -108,8 +108,13 @@ cli <- st_intersection(cl, st_buffer(bg2[i,], d)) %>%
   drop_units() %>%
   as.data.frame() %>%
   summarise(n = ncol(.), mean = sum(.)/ncol(.), max = max(.), min = min(.)) %>%
-  mutate(geoid = bg2[i,]$GEOID, bgkm2 = bg2[i,]$sqkm_bg, dist = d) %>%
-  select(geoid, bgkm2, dist, n, mean, max, min)
+  mutate(GEOID = bg2[i,]$GEOID, bgkm2 = bg2[i,]$sqkm_bg, dist = d) %>%
+  select(GEOID, bgkm2, dist, n, mean, max, min)
 
 cl.dist = rbind(cl.dist, cli)
 }
+
+bgcl <- full_join(bg2, cl.dist, by = 'GEOID')
+
+plot(bgcl$mean, bgcl$propPOC)
+plot(bgcl$n, bgcl$medhhinc)
