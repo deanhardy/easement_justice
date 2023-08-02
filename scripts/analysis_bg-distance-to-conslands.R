@@ -35,7 +35,7 @@ bg <- st_read(file.path(datadir, "bg_demg.geojson"), stringsAsFactors = FALSE) %
   filter(statefp != 'NA') %>%
   st_transform(crs = alb)
 
-## import lowcountry boundary file
+## import low country boundary file
 lc_tier1 <- st_read(file.path(datadir, "lc_tier1/lc_tier1.shp")) %>%
   st_transform(crs = alb) %>%
   mutate(area = st_area(geometry)*3.86102e-7)
@@ -118,3 +118,13 @@ bgcl <- full_join(bg2, cl.dist, by = 'GEOID')
 
 plot(bgcl$mean, bgcl$propPOC)
 plot(bgcl$n, bgcl$medhhinc)
+
+## creating matrix with BGs as rows and CLs as columns
+## generates distance matrix for one BG
+clm <- cl %>% 
+  st_intersection(st_buffer(bg2[i,], d)) %>%
+  st_distance(bg2[i,], ., by_element = F) %>%
+  drop_units()
+rownames(clm) <- bg2[i,]$GEOID
+  mutate(geoid = bg2[i,]$GEOID) %>%
+  as.matrix()
